@@ -990,6 +990,12 @@ button {
   display: none;
 }
 
+/* Marks the card the menu pointed at, so the jump is visible. */
+.portfolio-card.is-target {
+  border-color: var(--violet);
+  box-shadow: 0 0 0 3px rgba(141, 109, 202, 0.28), var(--shadow);
+}
+
 .portfolio-card:hover {
   box-shadow: var(--shadow);
   transform: translateY(-4px);

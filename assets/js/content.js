@@ -456,6 +456,23 @@
     }
   }
 
+  /* The hash target is rebuilt after load, so the jump is repeated here. */
+  function focusHash() {
+    const id = decodeURIComponent((location.hash || '').slice(1));
+    if (!id) return;
+    const target = document.getElementById(id);
+    if (!target) return;
+    if (target.classList.contains('portfolio-card')) {
+      const all = document.querySelector('[data-filter-group] [data-filter="all"]');
+      if (all && !all.classList.contains('is-active')) all.click();
+    }
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ block: 'start' });
+      target.classList.add('is-target');
+      setTimeout(() => target.classList.remove('is-target'), 2400);
+    });
+  }
+
   /* ----------------------------------------------------------------- run */
   async function load() {
     if (typeof fetchContent !== 'function' || !db) { markReady(); return; }
@@ -490,6 +507,7 @@
       }
       window.SITE_CONTENT = data;
       document.dispatchEvent(new CustomEvent('content:ready', { detail: data }));
+      focusHash();
     } catch (err) {
       console.warn('content load', err);
     }

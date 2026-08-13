@@ -272,6 +272,23 @@
   document.addEventListener("content:ready", updateFaq);
   updateFaq();
 
+  /* Same-page menu clicks: clear the filter first so the card is not hidden. */
+  function jumpToHash() {
+    const id = decodeURIComponent((location.hash || "").slice(1));
+    if (!id) return;
+    const target = document.getElementById(id);
+    if (!target || !target.classList.contains("portfolio-card")) return;
+    const all = document.querySelector("[data-filter-group] [data-filter='all']");
+    if (all && !all.classList.contains("is-active")) runFilter(all);
+    requestAnimationFrame(() => {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      target.classList.add("is-target");
+      setTimeout(() => target.classList.remove("is-target"), 2400);
+    });
+  }
+
+  window.addEventListener("hashchange", jumpToHash);
+
   document.querySelectorAll("[data-year]").forEach((node) => {
     node.textContent = String(new Date().getFullYear());
   });
