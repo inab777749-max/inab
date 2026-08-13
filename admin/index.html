@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>관리자 | INAB</title>
+  <style>
+    :root {
+      --ink: #24222a; --body: #5b5563; --muted: #837d8c;
+      --violet: #8d6dca; --deep: #65469f; --pale: #f0eaf8; --pale-2: #f8f5fc;
+      --line: #e4dcec; --paper: #fbf9fc; --white: #fff;
+      --danger: #b4485f; --ok: #3f7d63;
+      --radius: 16px;
+      --sans: Pretendard, "Noto Sans KR", "Malgun Gothic", sans-serif;
+      --serif: Georgia, "Noto Serif KR", Batang, serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(--sans); font-size: 15px; line-height: 1.6; }
+    h1, h2, h3 { margin: 0; font-family: var(--serif); font-weight: 600; letter-spacing: -0.02em; }
+    button, input, select, textarea { font: inherit; color: inherit; }
+
+    .inab-gate { position: fixed; z-index: 999; inset: 0; display: grid; padding: 24px; background: var(--pale-2); place-items: center; }
+    .inab-gate__box { width: min(360px, 100%); padding: 38px 32px; border: 1px solid var(--line); border-radius: 22px; background: #fff; box-shadow: 0 24px 60px rgba(60, 44, 84, 0.12); text-align: center; }
+    .inab-gate__title { font-size: 1.7rem; }
+    .inab-gate__sub { margin: 8px 0 22px; color: var(--muted); font-size: 0.85rem; }
+    .inab-gate input { width: 100%; margin-bottom: 9px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 11px; background: #fff; text-align: center; }
+    .inab-gate__err { min-height: 22px; margin-top: 10px; color: var(--danger); font-size: 0.83rem; }
+
+    .shell { max-width: 1180px; margin: 0 auto; padding: 26px 22px 90px; }
+    .topbar { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .topbar__title { font-size: 1.5rem; }
+    .topbar__sub { margin-top: 4px; color: var(--muted); font-size: 0.82rem; }
+    .topbar__side { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .btn { padding: 10px 17px; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: border-color 0.2s ease, background 0.2s ease; }
+    .btn:hover { border-color: var(--violet); }
+    .btn--primary { border-color: var(--deep); background: var(--deep); color: #fff; }
+    .btn--primary:hover { background: #573c8c; }
+    .btn--ghost { color: var(--deep); }
+    .btn--danger { border: 0; background: none; color: var(--muted); font-size: 1rem; padding: 4px 8px; }
+    .btn--danger:hover { color: var(--danger); }
+    .btn--sm { padding: 7px 13px; font-size: 0.8rem; }
+    .btn:disabled { opacity: 0.5; cursor: default; }
+
+    .tabs { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 22px; padding: 6px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+    .tab-btn { flex: 1 1 auto; min-width: 92px; padding: 10px 8px; border: 0; border-radius: 9px; background: transparent; color: var(--body); font-size: 0.82rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .tab-btn.is-active { background: var(--pale); color: var(--deep); }
+    .tab-panel { display: none; }
+    .tab-panel.is-active { display: block; }
+
+    .card { margin-bottom: 18px; padding: 24px 24px 26px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+    .card__title { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; justify-content: space-between; font-family: var(--serif); font-size: 1.12rem; font-weight: 600; }
+    .card__where { margin: 6px 0 18px; padding-bottom: 14px; border-bottom: 1px dashed var(--line); color: var(--muted); font-size: 0.78rem; }
+
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .field { display: flex; min-width: 0; flex-direction: column; gap: 5px; }
+    .field--full { grid-column: 1 / -1; }
+    .field label { color: var(--ink); font-size: 0.82rem; font-weight: 700; }
+    .field input[type=text], .field input[type=number], .field input[type=date], .field select, .field textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: 0.88rem;
+    }
+    .field textarea { min-height: 84px; resize: vertical; line-height: 1.6; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--violet); outline: 2px solid rgba(141, 109, 202, 0.16); outline-offset: 1px; }
+    .field .help { color: var(--muted); font-size: 0.73rem; line-height: 1.55; }
+    .field--check { flex-direction: row; align-items: center; gap: 9px; }
+    .field--check input { width: 17px; height: 17px; accent-color: var(--deep); }
+    .field--check .help { flex: 1; }
+
+    .thumb { width: 100%; max-width: 190px; margin-top: 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--pale); aspect-ratio: 4 / 3; object-fit: contain; display: none; }
+
+    .rows { display: grid; gap: 14px; }
+    .row { padding: 18px; border: 1px solid var(--line); border-radius: 13px; background: var(--pale-2); }
+    .row__head { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 13px; }
+    .row__name { font-size: 0.85rem; font-weight: 700; color: var(--deep); }
+    .row__tools { display: flex; gap: 4px; }
+    .row__tools .btn { padding: 5px 9px; font-size: 0.75rem; }
+
+    .palette { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .pal { display: grid; grid-template-columns: 44px 1fr; grid-template-rows: auto auto; gap: 3px 12px; align-items: center; padding: 11px 13px; border: 1px solid var(--line); border-radius: 12px; }
+    .pal input[type=color] { width: 44px; height: 44px; padding: 2px; border: 1px solid var(--line); border-radius: 10px; background: none; cursor: pointer; grid-row: 1 / span 2; }
+    .pal__label { font-size: 0.82rem; font-weight: 700; }
+    .pal input[type=text] { width: 100%; padding: 6px 9px; border: 1px solid var(--line); border-radius: 8px; font-size: 0.78rem; }
+    .pal__desc { grid-column: 1 / -1; color: var(--muted); font-size: 0.72rem; }
+    .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .contrast { margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: var(--pale-2); font-size: 0.8rem; line-height: 1.9; }
+    .contrast b { color: var(--deep); }
+    .badge { display: inline-block; min-width: 46px; margin-left: 6px; padding: 1px 8px; border-radius: 999px; color: #fff; font-size: 0.72rem; text-align: center; }
+    .badge--ok { background: var(--ok); }
+    .badge--no { background: var(--danger); }
+
+    .scale { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .scale__item { padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; }
+    .scale__row { display: flex; gap: 10px; align-items: center; }
+    .scale__row input { flex: 1; accent-color: var(--deep); }
+    .scale__value { min-width: 44px; font-size: 0.82rem; font-weight: 700; text-align: right; }
+
+    .table { width: 100%; border-collapse: collapse; }
+    .table th { padding: 11px 13px; background: var(--pale); color: var(--deep); font-size: 0.76rem; font-weight: 700; text-align: left; white-space: nowrap; }
+    .table th:first-child { border-radius: 9px 0 0 9px; }
+    .table th:last-child { width: 58px; border-radius: 0 9px 9px 0; text-align: center; }
+    .table td { padding: 12px 13px; border-bottom: 1px solid var(--line); font-size: 0.83rem; vertical-align: top; }
+    .table td:last-child { text-align: center; }
+    .table tr:last-child td { border-bottom: 0; }
+    .table-wrap { overflow-x: auto; }
+
+    .note { padding: 14px 16px; border-radius: 12px; background: var(--pale-2); color: var(--body); font-size: 0.8rem; line-height: 1.8; }
+    .empty { padding: 26px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 0.84rem; text-align: center; }
+    .savebar { position: sticky; z-index: 20; bottom: 0; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; margin-top: 24px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 14px; background: #fff; box-shadow: 0 -8px 26px rgba(60, 44, 84, 0.08); backdrop-filter: blur(6px); }
+    .savebar__state { color: var(--muted); font-size: 0.8rem; }
+    .savebar__state.is-dirty { color: var(--danger); font-weight: 700; }
+
+    #toast { position: fixed; bottom: 26px; left: 50%; z-index: 999; padding: 12px 22px; border-radius: 999px; color: #fff; background: #3b3346; font-size: 0.85rem; opacity: 0; transform: translateX(-50%) translateY(12px); transition: opacity 0.25s ease, transform 0.25s ease; pointer-events: none; }
+    #toast.is-on { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @media (max-width: 720px) {
+      .grid, .palette, .scale { grid-template-columns: 1fr; }
+      .field--full { grid-column: auto; }
+      .shell { padding: 18px 14px 80px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="inab-gate" id="inabGate">
+  <div class="inab-gate__box">
+    <h1 class="inab-gate__title">INAB Admin</h1>
+    <p class="inab-gate__sub">Supabase에 등록된 관리자 계정으로 로그인</p>
+    <input type="email" id="inabEmail" autocomplete="username" placeholder="이메일">
+    <input type="password" id="inabPassword" autocomplete="current-password" placeholder="비밀번호">
+    <button class="btn btn--primary" style="width:100%" id="inabLoginBtn" type="button">로그인</button>
+    <p class="inab-gate__err" id="inabError"></p>
+  </div>
+</div>
+
+<div class="shell" id="inabShell" style="display:none">
+  <div class="topbar">
+    <div>
+      <h1 class="topbar__title">사이트 관리</h1>
+      <p class="topbar__sub">수정한 뒤 아래 저장을 누르면 사이트에 바로 반영됩니다.</p>
+    </div>
+    <div class="topbar__side">
+      <button class="btn btn--sm" type="button" id="inabPreview">사이트 보기</button>
+      <button class="btn btn--sm" type="button" id="inabBackup">백업 내려받기</button>
+      <button class="btn btn--sm" type="button" id="inabRestore">백업 불러오기</button>
+      <button class="btn btn--sm" type="button" id="inabLogout">로그아웃</button>
+      <input type="file" id="inabRestoreFile" accept="application/json" hidden>
+    </div>
+  </div>
+
+  <div class="tabs" id="inabTabs"></div>
+  <div id="inabPanels"></div>
+
+  <div class="savebar">
+    <span class="savebar__state" id="inabState">불러오는 중</span>
+    <div class="topbar__side">
+      <button class="btn" type="button" id="inabReload">되돌리기</button>
+      <button class="btn btn--primary" type="button" id="inabSave">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="../assets/js/schema.js"></script>
+<script src="../assets/js/supabase.js"></script>
+<script>
+(() => {
+  "use strict";
+
+  const S = window.SITE_SCHEMA;
+  const gate = document.getElementById('inabGate');
+  const shell = document.getElementById('inabShell');
+  const errorBox = document.getElementById('inabError');
+  const stateBox = document.getElementById('inabState');
+
+  let content = {};
+  let sets = {};
+  let dirty = false;
+
+  /* ------------------------------------------------------------- helpers */
+  function esc(value) {
+    return String(value == null ? '' : value)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function txt(value) {
+    if (value == null) return '';
+    if (Array.isArray(value)) return value.join('\n');
+    if (typeof value === 'object') return '';
+    return String(value);
+  }
+
+  function toast(message) {
+    const box = document.getElementById('toast');
+    box.textContent = message;
+    box.classList.add('is-on');
+    clearTimeout(box._timer);
+    box._timer = setTimeout(() => box.classList.remove('is-on'), 2400);
+  }
+
+  function markDirty() {
+    dirty = true;
+    stateBox.textContent = '저장하지 않은 변경이 있습니다';
+    stateBox.classList.add('is-dirty');
+  }
+
+  function markClean(message) {
+    dirty = false;
+    stateBox.textContent = message || '모든 변경이 저장되었습니다';
+    stateBox.classList.remove('is-dirty');
+  }
+
+  window.addEventListener('beforeunload', (event) => {
+    if (!dirty) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+
+  /* ------------------------------------------------------------- inputs */
+  function inputHtml(field, value, idPrefix) {
+    const id = idPrefix + field.key;
+    const val = txt(value);
+    if (field.type === 'textarea') {
+      return '<textarea id="' + id + '" rows="' + (field.rows || 4) + '">' + esc(val) + '</textarea>';
+    }
+    if (field.type === 'select') {
+      const options = (field.options || []).map((option) => {
+        const v = option[0];
+        return '<option value="' + esc(v) + '"' + (val === v ? ' selected' : '') + '>' + esc(option[1]) + '</option>';
+      }).join('');
+      return '<select id="' + id + '">' + options + '</select>';
+    }
+    if (field.type === 'checkbox') {
+      return '<input type="checkbox" id="' + id + '"' + (value ? ' checked' : '') + '>';
+    }
+    if (field.type === 'number') {
+      return '<input type="number" id="' + id + '" value="' + esc(val) + '">';
+    }
+    if (field.type === 'date') {
+      return '<input type="date" id="' + id + '" value="' + esc(val.slice(0, 10)) + '">';
+    }
+    if (field.type === 'image') {
+      return '<input type="text" id="' + id + '" value="' + esc(val) + '" placeholder="https://…">'
+        + '<img class="thumb" data-thumb-for="' + id + '" alt="">';
+    }
+    return '<input type="text" id="' + id + '" value="' + esc(val) + '">';
+  }
+
+  function fieldHtml(field, value, idPrefix) {
+    const id = idPrefix + field.key;
+    const full = field.width === 'half' ? '' : ' field--full';
+    const help = field.help ? '<span class="help">' + esc(field.help) + '</span>' : '';
+    if (field.type === 'checkbox') {
+      return '<div class="field field--check' + full + '">' + inputHtml(field, value, idPrefix)
+        + '<label for="' + id + '">' + esc(field.label) + '</label>' + help + '</div>';
+    }
+    return '<div class="field' + full + '"><label for="' + id + '">' + esc(field.label) + '</label>'
+      + inputHtml(field, value, idPrefix) + help + '</div>';
+  }
+
+  function readField(field, idPrefix) {
+    const node = document.getElementById(idPrefix + field.key);
+    if (!node) return null;
+    if (field.type === 'checkbox') return node.checked;
+    if (field.type === 'number') return node.value === '' ? null : Number(node.value);
+    return node.value;
+  }
+
+  /* -------------------------------------------------------- collections */
+  function rowLabel(name, row, index) {
+    const fields = S.COLLECTIONS[name].fields;
+    const first = fields.find((f) => f.type === 'text' || f.type === 'textarea');
+    const value = first ? txt(row[first.key]).slice(0, 40) : '';
+    return (index + 1) + '. ' + (value || '(내용 없음)');
+  }
+
+  function renderCollection(name) {
+    const spec = S.COLLECTIONS[name];
+    const rows = sets[name] || [];
+    const wrap = document.getElementById('col-' + name);
+    if (!wrap) return;
+    if (!rows.length) {
+      wrap.innerHTML = '<p class="empty">아직 등록된 항목이 없습니다. 아래 “새로 추가”를 눌러 시작하세요.</p>';
+      return;
+    }
+    wrap.innerHTML = rows.map((row, index) => {
+      const prefix = name + '_' + index + '_';
+      const fields = spec.fields.map((field) => fieldHtml(field, row[field.key], prefix)).join('');
+      return '<div class="row" data-row="' + name + '" data-index="' + index + '">'
+        + '<div class="row__head"><span class="row__name">' + esc(rowLabel(name, row, index)) + '</span>'
+        + '<span class="row__tools">'
+        + '<button class="btn" type="button" data-move="' + name + '" data-dir="-1" data-index="' + index + '"' + (index === 0 ? ' disabled' : '') + '>▲</button>'
+        + '<button class="btn" type="button" data-move="' + name + '" data-dir="1" data-index="' + index + '"' + (index === rows.length - 1 ? ' disabled' : '') + '>▼</button>'
+        + '<button class="btn btn--danger" type="button" data-remove="' + name + '" data-index="' + index + '" aria-label="삭제">✕</button>'
+        + '</span></div>'
+        + '<div class="grid">' + fields + '</div></div>';
+    }).join('');
+    refreshThumbs();
+  }
+
+  function collectRows(name) {
+    const spec = S.COLLECTIONS[name];
+    const rows = sets[name] || [];
+    return rows.map((row, index) => {
+      const prefix = name + '_' + index + '_';
+      const next = Object.assign({}, row);
+      spec.fields.forEach((field) => {
+        const value = readField(field, prefix);
+        if (value !== null || field.type === 'number') next[field.key] = value;
+      });
+      return next;
+    });
+  }
+
+  function syncFromInputs() {
+    S.CONTENT_TABS.forEach((tab) => {
+      tab.cards.forEach((card) => {
+        card.fields.forEach((field) => {
+          const value = readField(field, 'c_');
+          if (value !== null) content[field.key] = value;
+        });
+      });
+    });
+    S.PALETTE.forEach((item) => {
+      const node = document.getElementById('pal_' + item.key);
+      if (node) content[item.key] = node.value;
+    });
+    S.TYPE_SCALE.forEach((item) => {
+      const node = document.getElementById('fs_' + item.key);
+      if (node) content[item.key] = node.value;
+    });
+    Object.keys(S.COLLECTIONS).forEach((name) => {
+      if (document.getElementById('col-' + name)) sets[name] = collectRows(name);
+    });
+  }
+
+  /* ------------------------------------------------------------ rendering */
+  function collectionCard(name) {
+    const spec = S.COLLECTIONS[name];
+    return '<div class="card">'
+      + '<div class="card__title"><span>' + esc(spec.label) + '</span>'
+      + '<button class="btn btn--sm" type="button" data-add="' + name + '">＋ 새로 추가</button></div>'
+      + '<p class="card__where">나오는 곳 — ' + esc(spec.where) + '</p>'
+      + '<div class="rows" id="col-' + name + '"></div></div>';
+  }
+
+  function themePanel() {
+    const presets = Object.keys(S.THEME_PRESETS).map((name) =>
+      '<button class="btn btn--sm" type="button" data-preset="' + esc(name) + '">' + esc(name) + '</button>').join('');
+    const swatches = S.PALETTE.map((item) => {
+      const value = txt(content[item.key]) || item.def;
+      return '<div class="pal">'
+        + '<input type="color" id="pal_' + item.key + '" value="' + esc(value) + '">'
+        + '<span class="pal__label">' + esc(item.label) + '</span>'
+        + '<input type="text" id="palhex_' + item.key + '" value="' + esc(value) + '" spellcheck="false">'
+        + '<span class="pal__desc">' + esc(item.desc) + ' · ' + esc(item.var) + '</span></div>';
+    }).join('');
+    const scales = S.TYPE_SCALE.map((item) => {
+      const value = parseFloat(txt(content[item.key])) || item.def;
+      return '<div class="scale__item"><span class="pal__label">' + esc(item.label) + '</span>'
+        + '<p class="pal__desc" style="margin:2px 0 8px">' + esc(item.desc) + '</p>'
+        + '<div class="scale__row"><input type="range" id="fs_' + item.key + '" min="0.8" max="1.4" step="0.05" value="'
+        + value + '"><span class="scale__value" id="fsval_' + item.key + '">' + value + '×</span></div></div>';
+    }).join('');
+    return '<div class="card"><div class="card__title">색 조합</div>'
+      + '<p class="card__where">나오는 곳 — 사이트 전 페이지. 저장하면 모든 페이지의 색이 함께 바뀝니다</p>'
+      + '<div class="presets">' + presets + '<button class="btn btn--sm btn--ghost" type="button" data-preset-reset>기본값으로</button></div>'
+      + '<div class="palette">' + swatches + '</div>'
+      + '<div class="contrast" id="inabContrast"></div></div>'
+      + '<div class="card"><div class="card__title">글자 크기</div>'
+      + '<p class="card__where">나오는 곳 — 사이트 전 페이지. 1×이 기본이고 0.8~1.4배까지 조절됩니다</p>'
+      + '<div class="scale">' + scales + '</div></div>';
+  }
+
+  function inquiryPanel() {
+    return '<div class="card"><div class="card__title">받은 문의</div>'
+      + '<p class="card__where">나오는 곳 — 관리자만 볼 수 있습니다. 커미션 안내 페이지의 전송 상자로 접수된 내용</p>'
+      + '<div class="table-wrap"><table class="table"><thead><tr><th>받은 날짜</th><th>연락처</th><th>양식</th><th>내용</th><th>삭제</th></tr></thead>'
+      + '<tbody id="inabInquiries"></tbody></table></div></div>';
+  }
+
+  function renderInquiries() {
+    const tbody = document.getElementById('inabInquiries');
+    if (!tbody) return;
+    const rows = sets.inquiries || [];
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#837d8c">아직 받은 문의가 없습니다.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map((row) => {
+      const date = txt(row.created_at).slice(0, 16).replace('T', ' ');
+      return '<tr><td>' + esc(date) + '</td><td>' + esc(txt(row.contact)) + '</td><td>' + esc(txt(row.form_title))
+        + '</td><td><details><summary>펼쳐보기</summary><pre style="white-space:pre-wrap;margin:8px 0 0;font:inherit">'
+        + esc(txt(row.message)) + '</pre></details></td>'
+        + '<td><button class="btn btn--danger" type="button" data-inquiry-delete="' + esc(row.id) + '" aria-label="삭제">✕</button></td></tr>';
+    }).join('');
+  }
+
+  function build() {
+    const tabs = document.getElementById('inabTabs');
+    const panels = document.getElementById('inabPanels');
+    const all = S.CONTENT_TABS.concat([
+      { id: 'theme', label: '🎨 테마', cards: [], custom: 'theme' },
+      { id: 'inbox', label: '📮 문의함', cards: [], custom: 'inbox' }
+    ]);
+
+    tabs.innerHTML = all.map((tab, index) =>
+      '<button class="tab-btn' + (index === 0 ? ' is-active' : '') + '" type="button" data-tab="' + tab.id + '">'
+      + esc(tab.label) + '</button>').join('');
+
+    panels.innerHTML = all.map((tab, index) => {
+      let inner = '';
+      if (tab.custom === 'theme') inner = themePanel();
+      else if (tab.custom === 'inbox') inner = inquiryPanel();
+      else {
+        inner = tab.cards.map((card) => '<div class="card"><div class="card__title">' + esc(card.title) + '</div>'
+          + '<p class="card__where">나오는 곳 — ' + esc(card.where) + '</p>'
+          + '<div class="grid">' + card.fields.map((field) => fieldHtml(field, content[field.key], 'c_')).join('')
+          + '</div></div>').join('');
+        inner += (tab.collections || []).map(collectionCard).join('');
+      }
+      const page = S.PAGES.find((p) => p.slug === tab.id);
+      const link = page ? '<div class="note">이 탭의 값은 <b>' + esc(page.label)
+        + '</b> 화면에 나옵니다. <a href="../' + page.file + '" target="_blank" rel="noopener">새 창에서 열어 확인하기</a></div>' : '';
+      return '<div class="tab-panel' + (index === 0 ? ' is-active' : '') + '" id="panel-' + tab.id + '">'
+        + inner + link + '</div>';
+    }).join('');
+
+    Object.keys(S.COLLECTIONS).forEach(renderCollection);
+    renderInquiries();
+    refreshThumbs();
+    updateContrast();
+  }
+
+  /* ------------------------------------------------------------- previews */
+  function refreshThumbs() {
+    document.querySelectorAll('[data-thumb-for]').forEach((img) => {
+      const source = document.getElementById(img.dataset.thumbFor);
+      if (!source) return;
+      const value = source.value.trim();
+      const src = (!value || /^(https?:|data:|\/|\.\.\/)/.test(value)) ? value : '../' + value;
+      img.style.display = value ? 'block' : 'none';
+      if (src && img.getAttribute('src') !== src) {
+        img.setAttribute('referrerpolicy', 'no-referrer');
+        img.src = src;
+      }
+    });
+  }
+
+  function luminance(hex) {
+    const value = hex.replace('#', '');
+    if (value.length !== 6) return 1;
+    const rgb = [0, 2, 4].map((i) => {
+      const c = parseInt(value.slice(i, i + 2), 16) / 255;
+      return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+    });
+    return 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2];
+  }
+
+  function ratio(a, b) {
+    const la = luminance(a);
+    const lb = luminance(b);
+    return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+  }
+
+  function readPalette() {
+    const out = {};
+    S.PALETTE.forEach((item) => {
+      const node = document.getElementById('pal_' + item.key);
+      out[item.key] = node ? node.value : item.def;
+    });
+    return out;
+  }
+
+  function updateContrast() {
+    const box = document.getElementById('inabContrast');
+    if (!box) return;
+    const p = readPalette();
+    const checks = [
+      ['본문 글자 ↔ 기본 배경', p.theme_body, p.theme_paper],
+      ['제목 글자 ↔ 기본 배경', p.theme_ink, p.theme_paper],
+      ['진한 포인트 ↔ 연한 배경', p.theme_deep, p.theme_pale],
+      ['버튼 글자(흰색) ↔ 진한 포인트', '#ffffff', p.theme_deep]
+    ];
+    box.innerHTML = '<b>읽기 쉬움 검사</b> — 4.5 이상이면 안심하고 쓸 수 있습니다<br>' + checks.map((check) => {
+      const value = ratio(check[1], check[2]);
+      const ok = value >= 4.5;
+      return check[0] + ' : ' + value.toFixed(2)
+        + '<span class="badge ' + (ok ? 'badge--ok' : 'badge--no') + '">' + (ok ? '좋음' : '낮음') + '</span>';
+    }).join('<br>');
+  }
+
+  /* ---------------------------------------------------------------- events */
+  document.addEventListener('click', async (event) => {
+    const target = event.target;
+    if (!target.closest) return;
+
+    const tab = target.closest('[data-tab]');
+    if (tab) {
+      document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('is-active', b === tab));
+      document.querySelectorAll('.tab-panel').forEach((p) => p.classList.toggle('is-active', p.id === 'panel-' + tab.dataset.tab));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
+    const add = target.closest('[data-add]');
+    if (add) {
+      const name = add.dataset.add;
+      syncFromInputs();
+      const rows = sets[name] || (sets[name] = []);
+      const blank = {};
+      S.COLLECTIONS[name].fields.forEach((field) => {
+        if (field.key === 'sort_order') blank[field.key] = (rows.length + 1) * 10;
+        else if (field.type === 'checkbox') blank[field.key] = false;
+        else if (field.type === 'select') blank[field.key] = field.options[0][0];
+        else if (field.type === 'number') blank[field.key] = 50;
+        else blank[field.key] = '';
+      });
+      rows.push(blank);
+      renderCollection(name);
+      markDirty();
+      return;
+    }
+
+    const remove = target.closest('[data-remove]');
+    if (remove) {
+      const name = remove.dataset.remove;
+      const index = Number(remove.dataset.index);
+      if (!window.confirm('이 항목을 지울까요? 저장하면 되돌릴 수 없습니다.')) return;
+      syncFromInputs();
+      const row = sets[name][index];
+      if (row && row.id) {
+        const ok = await deleteRow(name, row.id);
+        if (!ok) { toast('삭제하지 못했습니다.'); return; }
+      }
+      sets[name].splice(index, 1);
+      renderCollection(name);
+      markDirty();
+      toast('삭제했습니다.');
+      return;
+    }
+
+    const move = target.closest('[data-move]');
+    if (move) {
+      const name = move.dataset.move;
+      const index = Number(move.dataset.index);
+      const dir = Number(move.dataset.dir);
+      syncFromInputs();
+      const rows = sets[name];
+      const next = index + dir;
+      if (next < 0 || next >= rows.length) return;
+      const tmp = rows[index];
+      rows[index] = rows[next];
+      rows[next] = tmp;
+      rows.forEach((row, i) => { if ('sort_order' in row) row.sort_order = (i + 1) * 10; });
+      renderCollection(name);
+      markDirty();
+      return;
+    }
+
+    const preset = target.closest('[data-preset]');
+    if (preset) {
+      const values = S.THEME_PRESETS[preset.dataset.preset];
+      Object.keys(values).forEach((key) => {
+        const color = document.getElementById('pal_' + key);
+        const hex = document.getElementById('palhex_' + key);
+        if (color) color.value = values[key];
+        if (hex) hex.value = values[key];
+      });
+      updateContrast();
+      markDirty();
+      return;
+    }
+
+    if (target.closest('[data-preset-reset]')) {
+      S.PALETTE.forEach((item) => {
+        const color = document.getElementById('pal_' + item.key);
+        const hex = document.getElementById('palhex_' + item.key);
+        if (color) color.value = item.def;
+        if (hex) hex.value = item.def;
+      });
+      S.TYPE_SCALE.forEach((item) => {
+        const node = document.getElementById('fs_' + item.key);
+        const label = document.getElementById('fsval_' + item.key);
+        if (node) node.value = item.def;
+        if (label) label.textContent = item.def + '×';
+      });
+      updateContrast();
+      markDirty();
+      return;
+    }
+
+    const inquiryDelete = target.closest('[data-inquiry-delete]');
+    if (inquiryDelete) {
+      if (!window.confirm('이 문의를 지울까요?')) return;
+      const id = inquiryDelete.dataset.inquiryDelete;
+      const ok = await deleteRow('inquiries', id);
+      if (!ok) { toast('삭제하지 못했습니다.'); return; }
+      sets.inquiries = (sets.inquiries || []).filter((row) => String(row.id) !== String(id));
+      renderInquiries();
+      toast('삭제했습니다.');
+    }
+  });
+
+  document.addEventListener('input', (event) => {
+    const target = event.target;
+    if (!target.id) { markDirty(); return; }
+    if (target.id.indexOf('pal_') === 0) {
+      const key = target.id.slice(4);
+      const hex = document.getElementById('palhex_' + key);
+      if (hex) hex.value = target.value;
+      updateContrast();
+    }
+    if (target.id.indexOf('palhex_') === 0) {
+      const key = target.id.slice(7);
+      const color = document.getElementById('pal_' + key);
+      if (color && /^#[0-9a-fA-F]{6}$/.test(target.value.trim())) color.value = target.value.trim();
+      updateContrast();
+    }
+    if (target.id.indexOf('fs_') === 0) {
+      const label = document.getElementById('fsval_' + target.id.slice(3));
+      if (label) label.textContent = Number(target.value).toFixed(2).replace(/0$/, '') + '×';
+    }
+    if (target.dataset && target.type === 'text') refreshThumbs();
+    markDirty();
+  });
+
+  document.addEventListener('change', () => { refreshThumbs(); markDirty(); });
+
+  /* ----------------------------------------------------------------- data */
+  async function loadAll() {
+    stateBox.textContent = '불러오는 중';
+    const names = Object.keys(S.COLLECTIONS);
+    const [row, ...rest] = await Promise.all([
+      fetchContent(),
+      ...names.map((name) => fetchAll(name, { order: S.COLLECTIONS[name].order, asc: true })),
+      fetchAll('inquiries', { order: 'created_at', asc: false })
+    ]);
+    content = row || {};
+    sets = {};
+    names.forEach((name, index) => { sets[name] = rest[index] || []; });
+    sets.inquiries = rest[names.length] || [];
+    build();
+    markClean('불러왔습니다');
+  }
+
+  async function saveAll() {
+    syncFromInputs();
+    const button = document.getElementById('inabSave');
+    button.disabled = true;
+    stateBox.textContent = '저장 중';
+    try {
+      const ok = await saveContent(content);
+      if (!ok) throw new Error('content');
+      for (const name of Object.keys(S.COLLECTIONS)) {
+        const rows = sets[name] || [];
+        for (const row of rows) {
+          const payload = {};
+          S.COLLECTIONS[name].fields.forEach((field) => {
+            let value = row[field.key];
+            if (field.type === 'number') value = (value === '' || value == null) ? null : Number(value);
+            if (field.type === 'date' && !value) value = null;
+            payload[field.key] = value;
+          });
+          if (row.id) await updateRow(name, row.id, payload);
+          else await insertRow(name, payload);
+        }
+      }
+      await loadAll();
+      markClean('저장했습니다');
+      toast('저장했습니다. 사이트를 새로고침하면 반영됩니다.');
+    } catch (err) {
+      console.warn(err);
+      stateBox.textContent = '저장하지 못했습니다';
+      toast('저장하지 못했습니다. 로그인 상태를 확인해 주세요.');
+    }
+    button.disabled = false;
+  }
+
+  document.getElementById('inabSave').addEventListener('click', saveAll);
+  document.getElementById('inabReload').addEventListener('click', () => {
+    if (dirty && !window.confirm('저장하지 않은 변경이 사라집니다. 계속할까요?')) return;
+    loadAll();
+  });
+  document.getElementById('inabPreview').addEventListener('click', () => window.open('../index.html', '_blank'));
+
+  document.getElementById('inabBackup').addEventListener('click', () => {
+    syncFromInputs();
+    const payload = { saved_at: new Date().toISOString(), content: content, sets: sets };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'inab-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
+
+  document.getElementById('inabRestore').addEventListener('click', () => {
+    document.getElementById('inabRestoreFile').click();
+  });
+
+  document.getElementById('inabRestoreFile').addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    if (!window.confirm('백업 내용으로 화면을 채웁니다. 저장을 눌러야 사이트에 반영됩니다. 계속할까요?')) return;
+    try {
+      const parsed = JSON.parse(await file.text());
+      content = parsed.content || {};
+      Object.keys(S.COLLECTIONS).forEach((name) => { sets[name] = (parsed.sets && parsed.sets[name]) || []; });
+      build();
+      markDirty();
+      toast('백업을 불러왔습니다. 저장을 눌러 반영하세요.');
+    } catch (err) {
+      toast('백업 파일을 읽지 못했습니다.');
+    }
+    event.target.value = '';
+  });
+
+  /* ----------------------------------------------------------------- auth */
+  function openShell() {
+    gate.style.setProperty('display', 'none', 'important');
+    shell.style.setProperty('display', 'block', 'important');
+    loadAll();
+  }
+
+  async function login() {
+    const email = document.getElementById('inabEmail').value.trim();
+    const password = document.getElementById('inabPassword').value;
+    errorBox.textContent = '';
+    if (!db) { errorBox.textContent = 'supabase.js의 주소와 키를 먼저 채워주세요.'; return; }
+    const button = document.getElementById('inabLoginBtn');
+    button.disabled = true;
+    const { error } = await db.auth.signInWithPassword({ email: email, password: password });
+    button.disabled = false;
+    if (error) { errorBox.textContent = '이메일 또는 비밀번호를 확인해 주세요.'; return; }
+    openShell();
+  }
+
+  document.getElementById('inabLoginBtn').addEventListener('click', login);
+  ['inabEmail', 'inabPassword'].forEach((id) => {
+    document.getElementById(id).addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') login();
+    });
+  });
+
+  document.getElementById('inabLogout').addEventListener('click', async () => {
+    if (dirty && !window.confirm('저장하지 않은 변경이 사라집니다. 로그아웃할까요?')) return;
+    dirty = false;
+    if (db) await db.auth.signOut();
+    location.reload();
+  });
+
+  (async () => {
+    if (!db) {
+      errorBox.textContent = 'supabase.js의 주소와 키를 먼저 채워주세요.';
+      return;
+    }
+    const { data } = await db.auth.getSession();
+    if (data && data.session) openShell();
+  })();
+})();
+</script>
+</body>
+</html>
