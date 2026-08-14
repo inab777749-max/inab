@@ -494,6 +494,10 @@
     if (!/^image\//.test(file.type)) { toast('이미지 파일만 올릴 수 있습니다.'); return; }
     if (file.size > 15 * 1024 * 1024) { toast('15MB 이하 파일만 올릴 수 있습니다.'); return; }
     if (typeof uploadImage !== 'function' || !db) { toast('로그인 상태를 확인해 주세요.'); return; }
+    const moving = typeof isAnimated === 'function' && await isAnimated(file);
+    if (moving && file.size > 4 * 1024 * 1024) {
+      toast('움직이는 이미지는 줄이지 않고 그대로 올라갑니다. 4MB 이하를 권장합니다.');
+    }
     if (state) state.textContent = '올리는 중…';
     const url = await uploadImage(file, 'site', 1800);
     if (!url) {
@@ -502,7 +506,7 @@
       return;
     }
     target.value = url;
-    if (state) state.textContent = '올렸습니다';
+    if (state) state.textContent = moving ? '올렸습니다 (움직임 유지)' : '올렸습니다';
     setTimeout(() => { if (state) state.textContent = ''; }, 2500);
     refreshThumbs();
     markDirty();

@@ -68,10 +68,30 @@ async function saveContent(data) {
   return true;
 }
 
+/* Canvas keeps only the first frame, so moving pictures must skip compression.
+   GIF, animated WEBP (ANIM chunk) and APNG (acTL chunk) are uploaded untouched. */
+async function isAnimated(file) {
+  if (file.type === 'image/gif') return true;
+  if (file.type !== 'image/webp' && file.type !== 'image/png') return false;
+  try {
+    const head = new Uint8Array(await file.slice(0, 4096).arrayBuffer());
+    const marker = file.type === 'image/webp' ? [65, 78, 73, 77] : [97, 99, 84, 76];
+    for (let i = 0; i < head.length - 3; i += 1) {
+      if (head[i] === marker[0] && head[i + 1] === marker[1]
+        && head[i + 2] === marker[2] && head[i + 3] === marker[3]) return true;
+    }
+  } catch (err) {
+    console.warn('isAnimated', err);
+  }
+  return false;
+}
+
 /* Shrinks a picked file before upload so a phone photo does not become a 6MB asset. */
 async function compressImage(file, maxWidth, quality) {
   const limit = maxWidth || 1600;
-  if (file.type === 'image/gif' || file.type === 'image/svg+xml') return { blob: file, ext: file.name.split('.').pop() };
+  if (file.type === 'image/svg+xml' || await isAnimated(file)) {
+    return { blob: file, ext: (file.name.split('.').pop() || 'gif').toLowerCase(), kept: true };
+  }
   try {
     const bitmap = await createImageBitmap(file);
     const scale = Math.min(1, limit / bitmap.width);

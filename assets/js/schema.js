@@ -64,10 +64,11 @@ const COLLECTIONS = {
     where: '가격 안내 페이지 표',
     order: 'sort_order',
     fields: [
+      { key: 'group_label', label: '묶음 이름', type: 'text', width: 'half', help: '같은 이름끼리 표 안에서 소제목으로 묶입니다. 예: 닐로툰 / 마지카 클로즈2. 비우면 묶음 없이 맨 위에 나옵니다' },
       { key: 'name', label: '옵션명', type: 'text', width: 'half', help: '표 첫 칸' },
       { key: 'amount', label: '추가 금액', type: 'text', width: 'half', help: '예: +50,000원 / -3,000원 / 상담 후 안내' },
       { key: 'note', label: '안내', type: 'textarea', help: '표 마지막 칸 설명' },
-      { key: 'sort_order', label: '순서', type: 'number', width: 'half', help: '작은 값이 먼저' }
+      { key: 'sort_order', label: '순서', type: 'number', width: 'half', help: '작은 값이 먼저. 같은 묶음끼리 이어지도록 번호를 매기세요' }
     ]
   },
   commission_steps: {

@@ -376,8 +376,19 @@
     }
 
     if (sets.price_options) {
-      fill('[data-list="price_options"]', sets.price_options.map((row) => '<tr><td>' + esc(txt(row.name))
-        + '</td><td>' + esc(txt(row.amount)) + '</td><td>' + multiline(txt(row.note)) + '</td></tr>').join(''));
+      /* Rows carrying the same group label get one sub heading above them. */
+      let current = null;
+      const rows = sets.price_options.map((row) => {
+        const group = txt(row.group_label).trim();
+        let head = '';
+        if (group && group !== current) {
+          head = '<tr class="option-group"><th colspan="3" scope="colgroup">' + esc(group) + '</th></tr>';
+        }
+        current = group || current;
+        return head + '<tr><td>' + esc(txt(row.name)) + '</td><td>' + esc(txt(row.amount))
+          + '</td><td>' + multiline(txt(row.note)) + '</td></tr>';
+      }).join('');
+      fill('[data-list="price_options"]', rows);
       hideEmptySection('[data-list="price_options"]');
     }
 

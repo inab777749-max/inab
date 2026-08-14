@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS price_packages (
 );
 
 CREATE TABLE IF NOT EXISTS price_options (
-  id         BIGSERIAL PRIMARY KEY,
+  id          BIGSERIAL PRIMARY KEY,
+  group_label TEXT,
   name       TEXT,
   amount     TEXT,
   note       TEXT,
@@ -324,12 +325,12 @@ WHERE NOT EXISTS (SELECT 1 FROM price_packages);
 
 
 -- price_options 예시 자료 (표가 비어 있을 때만)
-INSERT INTO price_options (name, amount, note, sort_order)
+INSERT INTO price_options (group_label, name, amount, note, sort_order)
 SELECT * FROM (VALUES
-  ('Unity 파일', '+50,000원', '헤드·바디 FBX/VRM과 텍스처 기준. 유료 파츠·본 세팅 등은 제외됩니다.', 10),
-  ('헤드 교체', '+30,000원', '헤드와 바디를 서로 다른 베이스로 구성할 때 적용됩니다.', 20),
-  ('후기 이벤트', '-3,000원', '참여 조건은 신청 시 최신 안내를 확인해주세요.', 30),
-  ('빠른 마감 · 비공개 · 추가 수정', '상담 후 안내', '작업 범위와 일정에 따라 가능 여부와 금액이 달라집니다.', 40)
+  ('', 'Unity 파일', '+50,000원', '헤드·바디 FBX/VRM과 텍스처 기준. 유료 파츠·본 세팅 등은 제외됩니다.', 10),
+  ('', '헤드 교체', '+30,000원', '헤드와 바디를 서로 다른 베이스로 구성할 때 적용됩니다.', 20),
+  ('', '후기 이벤트', '-3,000원', '참여 조건은 신청 시 최신 안내를 확인해주세요.', 30),
+  ('', '빠른 마감 · 비공개 · 추가 수정', '상담 후 안내', '작업 범위와 일정에 따라 가능 여부와 금액이 달라집니다.', 40)
 ) AS seed
 WHERE NOT EXISTS (SELECT 1 FROM price_options);
 
