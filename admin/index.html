@@ -67,7 +67,17 @@
     .field--check input { width: 17px; height: 17px; accent-color: var(--deep); }
     .field--check .help { flex: 1; }
 
-    .thumb { width: 100%; max-width: 190px; margin-top: 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--pale); aspect-ratio: 4 / 3; object-fit: contain; display: none; }
+    .imgbox { display: grid; grid-template-columns: 168px 1fr; gap: 14px; align-items: start; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--pale-2); }
+    .imgbox__frame { position: relative; width: 168px; overflow: hidden; border: 1px solid var(--line); border-radius: 9px; background: repeating-conic-gradient(#f2eef8 0% 25%, #fff 0% 50%) 50% / 14px 14px; }
+    .imgbox__frame img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .imgbox__tag { position: absolute; bottom: 0; left: 0; right: 0; padding: 3px 7px; color: #fff; background: rgba(36,34,42,.62); font-size: 0.66rem; text-align: center; }
+    .imgbox__side { display: flex; min-width: 0; flex-direction: column; gap: 8px; }
+    .imgbox__row { display: flex; flex-wrap: wrap; gap: 7px; }
+    .imgbox__spec { padding: 8px 11px; border-radius: 8px; background: #fff; color: var(--body); font-size: 0.73rem; line-height: 1.6; }
+    .imgbox__spec b { color: var(--deep); }
+    .imgbox input[type=text] { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; background: #fff; font-size: 0.78rem; }
+    .imgbox__state { color: var(--deep); font-size: 0.73rem; }
+    @media (max-width: 720px) { .imgbox { grid-template-columns: 1fr; } .imgbox__frame { width: 100%; max-width: 220px; } }
 
     .rows { display: grid; gap: 14px; }
     .row { padding: 18px; border: 1px solid var(--line); border-radius: 13px; background: var(--pale-2); }
@@ -243,8 +253,22 @@
       return '<input type="date" id="' + id + '" value="' + esc(val.slice(0, 10)) + '">';
     }
     if (field.type === 'image') {
-      return '<input type="text" id="' + id + '" value="' + esc(val) + '" placeholder="https://…">'
-        + '<img class="thumb" data-thumb-for="' + id + '" alt="">';
+      const ratio = field.ratio || '4 / 3';
+      const fallback = field.fallback || '';
+      return '<div class="imgbox">'
+        + '<div class="imgbox__frame" style="aspect-ratio:' + ratio + '">'
+        + '<img data-thumb-for="' + id + '" data-fallback="' + esc(fallback) + '" alt="">'
+        + '<span class="imgbox__tag" data-tag-for="' + id + '"></span></div>'
+        + '<div class="imgbox__side">'
+        + '<div class="imgbox__row">'
+        + '<label class="btn btn--sm btn--primary" for="up_' + id + '">사진 올리기</label>'
+        + '<input type="file" id="up_' + id + '" accept="image/*" data-upload-for="' + id + '" hidden>'
+        + (fallback ? '<button class="btn btn--sm" type="button" data-clear-for="' + id + '">기본 사진으로</button>' : '')
+        + '<span class="imgbox__state" data-state-for="' + id + '"></span></div>'
+        + '<input type="text" id="' + id + '" value="' + esc(val) + '" placeholder="사진을 올리거나 주소를 붙여넣으세요">'
+        + '<div class="imgbox__spec"><b>규격</b> ' + esc(field.spec || '')
+        + '<br>올린 사진은 자동으로 줄여서 저장됩니다. 다른 곳에 올린 사진 주소를 붙여넣어도 됩니다.</div>'
+        + '</div></div>';
     }
     return '<input type="text" id="' + id + '" value="' + esc(val) + '">';
   }
@@ -436,18 +460,52 @@
   }
 
   /* ------------------------------------------------------------- previews */
+  /* Site-relative paths need the ../ prefix because admin sits one level down. */
+  function resolvePath(value) {
+    if (!value) return '';
+    return /^(https?:|data:|\/|\.\.\/)/.test(value) ? value : '../' + value;
+  }
+
   function refreshThumbs() {
     document.querySelectorAll('[data-thumb-for]').forEach((img) => {
       const source = document.getElementById(img.dataset.thumbFor);
       if (!source) return;
       const value = source.value.trim();
-      const src = (!value || /^(https?:|data:|\/|\.\.\/)/.test(value)) ? value : '../' + value;
-      img.style.display = value ? 'block' : 'none';
+      const fallback = img.dataset.fallback || '';
+      const shown = value || fallback;
+      const src = resolvePath(shown);
+      const tag = document.querySelector('[data-tag-for="' + img.dataset.thumbFor + '"]');
+      if (tag) tag.textContent = value ? '지금 쓰는 사진' : (fallback ? '기본 사진 (비어 있음)' : '사진 없음');
+      img.style.visibility = shown ? 'visible' : 'hidden';
       if (src && img.getAttribute('src') !== src) {
         img.setAttribute('referrerpolicy', 'no-referrer');
         img.src = src;
       }
     });
+  }
+
+  async function handleUpload(input) {
+    const targetId = input.dataset.uploadFor;
+    const target = document.getElementById(targetId);
+    const state = document.querySelector('[data-state-for="' + targetId + '"]');
+    const file = input.files && input.files[0];
+    input.value = '';
+    if (!target || !file) return;
+    if (!/^image\//.test(file.type)) { toast('이미지 파일만 올릴 수 있습니다.'); return; }
+    if (file.size > 15 * 1024 * 1024) { toast('15MB 이하 파일만 올릴 수 있습니다.'); return; }
+    if (typeof uploadImage !== 'function' || !db) { toast('로그인 상태를 확인해 주세요.'); return; }
+    if (state) state.textContent = '올리는 중…';
+    const url = await uploadImage(file, 'site', 1800);
+    if (!url) {
+      if (state) state.textContent = '';
+      toast('올리지 못했습니다. Supabase 저장소 설정을 확인해 주세요.');
+      return;
+    }
+    target.value = url;
+    if (state) state.textContent = '올렸습니다';
+    setTimeout(() => { if (state) state.textContent = ''; }, 2500);
+    refreshThumbs();
+    markDirty();
   }
 
   function luminance(hex) {
@@ -593,6 +651,13 @@
       return;
     }
 
+    const clear = target.closest('[data-clear-for]');
+    if (clear) {
+      const field = document.getElementById(clear.dataset.clearFor);
+      if (field) { field.value = ''; refreshThumbs(); markDirty(); }
+      return;
+    }
+
     const inquiryDelete = target.closest('[data-inquiry-delete]');
     if (inquiryDelete) {
       if (!window.confirm('이 문의를 지울까요?')) return;
@@ -628,7 +693,11 @@
     markDirty();
   });
 
-  document.addEventListener('change', () => { refreshThumbs(); markDirty(); });
+  document.addEventListener('change', (event) => {
+    if (event.target.dataset && event.target.dataset.uploadFor) { handleUpload(event.target); return; }
+    refreshThumbs();
+    markDirty();
+  });
 
   /* ----------------------------------------------------------------- data */
   async function loadAll() {

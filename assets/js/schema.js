@@ -22,7 +22,7 @@ const COLLECTIONS = {
       { key: 'title', label: '작업명', type: 'text', help: '카드 제목. 상단 메뉴 하위 목록에도 같은 이름이 들어갑니다', width: 'half' },
       { key: 'meta', label: '영문 라벨', type: 'text', help: '제목 위 작은 글씨. 예: Illustration Based', width: 'half' },
       { key: 'description', label: '설명', type: 'textarea', help: '카드 본문과 확대 화면에 같이 쓰입니다. 2~3줄 권장' },
-      { key: 'image_url', label: '이미지 주소', type: 'image', help: '이미지 직접 주소(https://…). 가로 4:3 이상 권장, 권장 1200×900' },
+      { key: 'image_url', label: '이미지 주소', type: 'image', help: '포트폴리오 카드와 확대 화면에 쓰이는 작업 사진', spec: '권장 1200×900 (가로 4:3) · 세로로 긴 사진은 아래 “카드 표시 방식”을 전체 보기로', ratio: '4 / 3' },
       { key: 'tag', label: '분류', type: 'text', help: '아래 분류 목록의 영문 값과 같게. 예: sculpt / facial / nilo / styling', width: 'half' },
       { key: 'anchor', label: '앵커 아이디', type: 'text', help: '메뉴에서 이 카드로 바로 가는 주소. 영문 소문자·하이픈. 예: original-facial', width: 'half' },
       { key: 'fit', label: '카드 표시 방식', type: 'select', options: [['cover', '꽉 채우기 (잘림)'], ['contain', '전체 보기 (여백은 흐린 배경)']], help: '세로로 긴 사진은 전체 보기를 쓰면 잘리지 않습니다', width: 'half' },
@@ -42,7 +42,7 @@ const COLLECTIONS = {
       { key: 'link_label', label: '링크 문구', type: 'text', width: 'half', help: '비우면 "아트머그 페이지"' },
       { key: 'sort_order', label: '순서', type: 'number', width: 'half', help: '작은 값이 먼저' },
       { key: 'description', label: '혜택 설명', type: 'textarea', help: '할인 조건을 한 문단으로' },
-      { key: 'image_url', label: '이미지 주소', type: 'image', help: '가로 16:9로 잘립니다. 권장 816×459' }
+      { key: 'image_url', label: '이미지 주소', type: 'image', help: '협업 작가 카드 위쪽 이미지', spec: '권장 816×459 (가로 16:9) · 이 비율로 잘립니다', ratio: '16 / 9' }
     ]
   },
   price_packages: {
@@ -136,7 +136,7 @@ const COLLECTIONS = {
       { key: 'status', label: '상태 배지', type: 'text', width: 'half', help: '이미지 위 배지. 예: 판매중 / 예약 / 완료. 비우면 배지 없음' },
       { key: 'sort_order', label: '순서', type: 'number', width: 'half', help: '작은 값이 먼저' },
       { key: 'description', label: '설명', type: 'textarea', help: '구성·수정 범위 등' },
-      { key: 'image_url', label: '이미지 주소', type: 'image', help: '세로 3:4로 잘립니다. 권장 900×1200' },
+      { key: 'image_url', label: '이미지 주소', type: 'image', help: '개인작 카드 사진', spec: '권장 900×1200 (세로 3:4) · 이 비율로 잘립니다', ratio: '3 / 4' },
       { key: 'link_url', label: '링크 주소', type: 'text', width: 'half', help: '구매·문의로 이동할 주소. 비우면 링크 없음' },
       { key: 'link_label', label: '링크 문구', type: 'text', width: 'half', help: '비우면 "자세히 보기"' }
     ]
@@ -153,6 +153,15 @@ const CONTENT_TABS = [
           { key: 'site_brand', label: '로고 글자', type: 'text', width: 'half', help: '헤더 왼쪽과 푸터에 쓰이는 이름' },
           { key: 'site_name', label: '사이트 이름', type: 'text', width: 'half', help: '브라우저 탭 제목 뒤에 붙습니다. 예: INAB' },
           { key: 'footer_copy', label: '푸터 문구', type: 'text', help: '연도는 자동으로 올해가 들어갑니다. {year} 라고 적은 자리에 표시' }
+        ]
+      },
+      {
+        title: '장식 이미지 · 탭 아이콘', where: '전 페이지에 공통으로 들어가는 나비 장식과 브라우저 탭 아이콘',
+        fields: [
+          { key: 'img_butterfly_small', label: '메인 첫 화면 나비', type: 'image', help: '메인 맨 위 제목 옆에 떠 있는 나비. 큰 것과 작은 것 두 마리에 같은 그림이 쓰입니다', spec: '배경이 투명한 PNG · WEBP 권장 · 권장 600×526 · 비율은 자유(원본 비율 유지)', ratio: '600 / 526', fallback: 'assets/images/butterfly-small.webp' },
+          { key: 'img_butterfly_hero', label: '하위 페이지 상단 나비', type: 'image', help: '작가 프로필·포트폴리오 등 각 페이지 제목 오른쪽에 크게 들어가는 나비', spec: '배경이 투명한 PNG · WEBP 권장 · 권장 962×1040 (세로형) · 비율은 자유', ratio: '962 / 1040', fallback: 'assets/images/butterfly-hero.webp' },
+          { key: 'img_butterfly_watermark', label: '연한 워터마크 나비', type: 'image', help: '메인 하단 Contact 칸과 개인작 준비 중 화면 구석에 옅게 깔리는 그림', spec: '배경이 투명한 PNG · WEBP 권장 · 권장 876×880 · 연한 색일수록 자연스럽습니다', ratio: '1 / 1', fallback: 'assets/images/butterfly-watermark.webp' },
+          { key: 'img_favicon', label: '브라우저 탭 아이콘', type: 'image', help: '인터넷 창 탭과 즐겨찾기에 뜨는 작은 아이콘', spec: '정사각 32×32 이상 (64×64 권장) · PNG · SVG · 아주 작게 보이므로 단순한 그림이 좋습니다', ratio: '1 / 1', fallback: 'assets/images/favicon.svg' }
         ]
       },
       {
@@ -175,7 +184,7 @@ const CONTENT_TABS = [
       {
         title: '검색 정보 (SEO)', where: '검색 결과·공유 미리보기. 화면에는 안 보입니다',
         fields: [
-          { key: 'seo_image', label: '공유 미리보기 이미지', type: 'image', help: '디스코드·X에 링크를 붙였을 때 뜨는 사진. https:// 로 시작하는 전체 주소를 넣어야 확실합니다. 권장 1200×630' }
+          { key: 'seo_image', label: '공유 미리보기 이미지', type: 'image', help: '디스코드·X에 주소를 붙였을 때 뜨는 사진. 비우면 메인 첫 화면 사진이 쓰입니다', spec: '권장 1200×630 (가로 1.91:1) · JPG/PNG/WEBP', ratio: '1200 / 630', fallback: 'assets/images/hero.webp' }
         ].concat(PAGES.flatMap(p => ([
           { key: 'seo_' + p.slug + '_title', label: p.label + ' 탭 제목', type: 'text', width: 'half', help: '브라우저 탭에 보이는 글' },
           { key: 'seo_' + p.slug + '_desc', label: p.label + ' 설명', type: 'text', width: 'half', help: '검색 결과 아래 설명. 80자 안팎' }
@@ -189,7 +198,7 @@ const CONTENT_TABS = [
       {
         title: '첫 화면', where: '메인 최상단',
         fields: [
-          { key: 'home_hero_image', label: '배경 사진', type: 'image', help: '가로형 사진. 권장 1800×1013. 비우면 사이트에 들어있는 기본 사진' },
+          { key: 'home_hero_image', label: '배경 사진', type: 'image', help: '메인 첫 화면을 덮는 큰 사진. 오른쪽 절반에 인물이 오도록 찍힌 가로 사진이 잘 맞습니다', spec: '권장 1800×1013 (가로 16:9) · 최소 1200px · JPG/PNG/WEBP', ratio: '16 / 9', fallback: 'assets/images/hero.webp' },
           { key: 'home_hero_focus', label: '배경 초점', type: 'text', width: 'half', help: '가로% 세로% 두 값. 기본 "center 38%". 인물이 잘리면 세로%를 조절' },
           { key: 'home_eyebrow', label: '윗줄 라벨', type: 'text', width: 'half', help: '제목 위 작은 영문' },
           { key: 'home_title', label: '큰 제목', type: 'text', width: 'half', help: '가장 큰 글자' },
@@ -241,7 +250,7 @@ const CONTENT_TABS = [
       {
         title: '작가 소개', where: '작가 프로필 페이지 본문',
         fields: [
-          { key: 'profile_image', label: '프로필 사진', type: 'image', help: '정사각형으로 잘립니다. 권장 640×640' },
+          { key: 'profile_image', label: '프로필 사진', type: 'image', help: '작가 프로필 페이지 왼쪽 사진. 정사각형으로 잘립니다', spec: '권장 640×640 (정사각 1:1) · 최소 400px · JPG/PNG/WEBP', ratio: '1 / 1', fallback: 'assets/images/profile.webp' },
           { key: 'profile_image_focus', label: '사진 초점', type: 'text', width: 'half', help: '가로% 세로%. 기본 "50% 50%"' },
           { key: 'profile_eyebrow', label: '윗줄 라벨', type: 'text', width: 'half', help: '이름 위 작은 영문' },
           { key: 'profile_name', label: '이름', type: 'text', width: 'half', help: '큰 글씨' },

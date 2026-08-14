@@ -10,6 +10,7 @@ const db = (SUPABASE_READY && window.supabase && window.supabase.createClient)
   : null;
 
 const CONTENT_ROW_ID = 1;
+const IMAGE_BUCKET = 'site-images';
 
 async function fetchContent() {
   if (!db) return null;
@@ -65,6 +66,45 @@ async function saveContent(data) {
     .upsert({ id: CONTENT_ROW_ID, data: data, updated_at: new Date().toISOString() });
   if (error) { console.warn('saveContent', error); return false; }
   return true;
+}
+
+/* Shrinks a picked file before upload so a phone photo does not become a 6MB asset. */
+async function compressImage(file, maxWidth, quality) {
+  const limit = maxWidth || 1600;
+  if (file.type === 'image/gif' || file.type === 'image/svg+xml') return { blob: file, ext: file.name.split('.').pop() };
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, limit / bitmap.width);
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const type = canvas.toDataURL('image/webp').indexOf('image/webp') === 5 ? 'image/webp' : 'image/jpeg';
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, type, quality || 0.86));
+    if (!blob) return { blob: file, ext: file.name.split('.').pop() };
+    return { blob: blob, ext: type === 'image/webp' ? 'webp' : 'jpg' };
+  } catch (err) {
+    console.warn('compressImage', err);
+    return { blob: file, ext: file.name.split('.').pop() };
+  }
+}
+
+async function uploadImage(file, folder, maxWidth) {
+  if (!db) return null;
+  try {
+    const packed = await compressImage(file, maxWidth);
+    const stamp = Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    const path = (folder || 'uploads') + '/' + stamp + '.' + packed.ext;
+    const { error } = await db.storage.from(IMAGE_BUCKET)
+      .upload(path, packed.blob, { upsert: true, contentType: packed.blob.type || 'image/jpeg' });
+    if (error) { console.warn('uploadImage', error); return null; }
+    const { data } = db.storage.from(IMAGE_BUCKET).getPublicUrl(path);
+    return (data && data.publicUrl) || null;
+  } catch (err) {
+    console.warn('uploadImage', err);
+    return null;
+  }
 }
 
 function showToast(message, duration) {
