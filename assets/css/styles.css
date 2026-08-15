@@ -1178,6 +1178,71 @@ button {
   cursor: pointer;
 }
 
+.modal__stage {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ebe6ee;
+}
+
+.modal__step {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  width: 46px;
+  height: 46px;
+  border: 0;
+  border-radius: 50%;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 6px 18px rgba(40, 30, 55, 0.18);
+  font-size: 1.7rem;
+  line-height: 1;
+  cursor: pointer;
+  place-items: center;
+  transition: background 0.2s ease;
+}
+
+.modal__step:hover {
+  background: #fff;
+}
+
+.modal__step--prev { left: 14px; }
+.modal__step--next { right: 14px; }
+
+.modal__count {
+  position: absolute;
+  right: 16px;
+  bottom: 14px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(36, 34, 42, 0.62);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+}
+
+/* Card badge telling the visitor there is more than one shot. */
+.media-count {
+  position: absolute;
+  z-index: 2;
+  bottom: 14px;
+  left: 14px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(36, 34, 42, 0.58);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+
+.shop-card__media {
+  padding: 0;
+  border: 0;
+  cursor: zoom-in;
+}
+
 .modal__image {
   width: 100%;
   height: auto;

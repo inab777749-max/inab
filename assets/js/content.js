@@ -114,6 +114,14 @@
   }
 
   /* ------------------------------------------------------------ renderers */
+  /* One URL per line; the old single-image column is the fallback. */
+  function gallery(row) {
+    const list = lines(row.images);
+    if (list.length) return list;
+    const single = txt(row.image_url).trim();
+    return single ? [single] : [];
+  }
+
   function focusStyle(row) {
     const x = row.focus_x == null || row.focus_x === '' ? 50 : Number(row.focus_x);
     const y = row.focus_y == null || row.focus_y === '' ? 50 : Number(row.focus_y);
@@ -121,18 +129,23 @@
   }
 
   function portfolioCard(row, tag) {
+    const shots = gallery(row);
+    const first = shots[0] || '';
     const contain = row.fit === 'contain';
     const style = focusStyle(row);
     const media = 'portfolio-card__media' + (contain ? ' portfolio-card__media--contain' : '');
     const blur = contain ? '<span class="portfolio-card__blur" aria-hidden="true" style="background-image:url('
-      + esc(txt(row.image_url)) + ')"></span>' : '';
+      + esc(first) + ')"></span>' : '';
     const title = esc(txt(row.title));
+    const count = shots.length > 1
+      ? '<span class="media-count" aria-hidden="true">1 / ' + shots.length + '</span>' : '';
     return '<article class="portfolio-card" id="' + esc(txt(row.anchor)) + '" data-tags="' + esc(txt(row.tag)) + '">'
       + '<button class="' + media + '" type="button" style="' + esc(style) + '" data-lightbox'
-      + ' data-image="' + esc(txt(row.image_url)) + '" data-title="' + title
+      + ' data-image="' + esc(first) + '" data-images="' + esc(shots.join('|')) + '" data-title="' + title
       + '" data-description="' + esc(txt(row.description)) + '" aria-label="' + title + ' 크게 보기">'
       + blur
-      + '<img src="' + esc(txt(row.image_url)) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
+      + '<img src="' + esc(first) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
+      + count
       + '</button>'
       + '<div class="portfolio-card__body"><p class="work-card__meta">' + esc(txt(row.meta)) + '</p>'
       + '<' + tag + ' class="portfolio-card__title">' + title + '</' + tag + '>'
@@ -141,12 +154,15 @@
   }
 
   function workCard(row) {
+    const shots = gallery(row);
+    const first = shots[0] || '';
     const title = esc(txt(row.title));
     return '<article class="work-card" data-tags="' + esc(txt(row.tag)) + '">'
-      + '<button class="work-card__button" type="button" data-lightbox data-image="' + esc(txt(row.image_url))
-      + '" data-title="' + title + '" data-description="' + esc(txt(row.description))
+      + '<button class="work-card__button" type="button" data-lightbox data-image="' + esc(first)
+      + '" data-images="' + esc(shots.join('|')) + '" data-title="' + title
+      + '" data-description="' + esc(txt(row.description))
       + '" aria-label="' + title + ' 크게 보기">'
-      + '<span class="work-card__image"><img src="' + esc(txt(row.image_url))
+      + '<span class="work-card__image"><img src="' + esc(first)
       + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="' + esc(focusStyle(row)) + '"></span>'
       + '</button>'
       + '<div class="work-card__body"><p class="work-card__meta">' + esc(txt(row.meta)) + '</p>'
@@ -179,12 +195,19 @@
   function shopCard(row) {
     const status = txt(row.status).trim();
     const url = txt(row.link_url).trim();
-    const image = txt(row.image_url).trim();
-    return '<article class="shop-card">'
-      + '<div class="shop-card__media" style="' + esc(focusStyle(row)) + '">'
-      + (image ? '<img src="' + esc(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">' : '')
-      + (status ? '<span class="shop-card__status">' + esc(status) + '</span>' : '')
-      + '</div><div class="shop-card__body"><h2 class="shop-card__title">' + esc(txt(row.title)) + '</h2>'
+    const shots = gallery(row);
+    const image = shots[0] || '';
+    const title = esc(txt(row.title));
+    const count = shots.length > 1
+      ? '<span class="media-count" aria-hidden="true">1 / ' + shots.length + '</span>' : '';
+    const media = image
+      ? '<button class="shop-card__media" type="button" style="' + esc(focusStyle(row)) + '" data-lightbox'
+        + ' data-image="' + esc(image) + '" data-images="' + esc(shots.join('|')) + '" data-title="' + title
+        + '" data-description="' + esc(txt(row.description)) + '" aria-label="' + title + ' 크게 보기">'
+        + '<img src="' + esc(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">'
+        + (status ? '<span class="shop-card__status">' + esc(status) + '</span>' : '') + count + '</button>'
+      : '<div class="shop-card__media">' + (status ? '<span class="shop-card__status">' + esc(status) + '</span>' : '') + '</div>';
+    return '<article class="shop-card">' + media + '<div class="shop-card__body"><h2 class="shop-card__title">' + esc(txt(row.title)) + '</h2>'
       + (txt(row.price).trim() ? '<p class="shop-card__price">' + esc(txt(row.price)) + '</p>' : '')
       + '<p class="shop-card__copy">' + multiline(txt(row.description)) + '</p>'
       + (url ? '<a class="text-link" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">'

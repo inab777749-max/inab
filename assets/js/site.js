@@ -56,6 +56,9 @@
     const lightbox = target.closest("[data-lightbox]");
     if (lightbox) { openModal(lightbox); return; }
 
+    const step = target.closest("[data-modal-step]");
+    if (step) { stepShot(Number(step.dataset.modalStep)); return; }
+
     if (target.closest("[data-modal-close]")) {
       const modal = target.closest("dialog");
       if (modal) modal.close();
@@ -80,6 +83,10 @@
       closeNav();
       document.querySelectorAll("dialog[open]").forEach((dialog) => dialog.close());
       return;
+    }
+    if (document.querySelector("dialog[data-lightbox-modal][open]")) {
+      if (event.key === "ArrowLeft") { stepShot(-1); return; }
+      if (event.key === "ArrowRight") { stepShot(1); return; }
     }
     const tab = event.target.closest && event.target.closest("[role='tab']");
     if (!tab) return;
@@ -115,22 +122,48 @@
   }
 
   /* ---------------------------------------------------------------- modal */
-  function openModal(button) {
+  let shots = [];
+  let shotIndex = 0;
+
+  function paintShot() {
     const modal = document.querySelector("[data-lightbox-modal]");
-    if (!modal || typeof modal.showModal !== "function") return;
+    if (!modal) return;
     const image = modal.querySelector("[data-modal-image]");
-    const title = modal.querySelector("[data-modal-title]");
-    const copy = modal.querySelector("[data-modal-copy]");
+    const counter = modal.querySelector("[data-modal-count]");
+    const many = shots.length > 1;
     if (image) {
       image.removeAttribute("width");
       image.removeAttribute("height");
-      image.src = button.dataset.image || "";
-      image.alt = button.dataset.title || "포트폴리오 확대 이미지";
+      image.src = shots[shotIndex] || "";
       image.setAttribute("referrerpolicy", "no-referrer");
-      image.hidden = false;
+      image.hidden = !shots.length;
     }
+    if (counter) {
+      counter.textContent = (shotIndex + 1) + " / " + shots.length;
+      counter.hidden = !many;
+    }
+    modal.querySelectorAll("[data-modal-step]").forEach((node) => { node.hidden = !many; });
+  }
+
+  function stepShot(delta) {
+    if (shots.length < 2) return;
+    shotIndex = (shotIndex + delta + shots.length) % shots.length;
+    paintShot();
+  }
+
+  function openModal(button) {
+    const modal = document.querySelector("[data-lightbox-modal]");
+    if (!modal || typeof modal.showModal !== "function") return;
+    const list = (button.dataset.images || "").split("|").map((s) => s.trim()).filter(Boolean);
+    shots = list.length ? list : [button.dataset.image || ""].filter(Boolean);
+    shotIndex = 0;
+    const image = modal.querySelector("[data-modal-image]");
+    const title = modal.querySelector("[data-modal-title]");
+    const copy = modal.querySelector("[data-modal-copy]");
+    if (image) image.alt = button.dataset.title || "확대 이미지";
     if (title) title.textContent = button.dataset.title || "포트폴리오";
     if (copy) copy.textContent = button.dataset.description || "";
+    paintShot();
     modal.showModal();
   }
 

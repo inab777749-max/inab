@@ -5,7 +5,13 @@
 -- 1) 추가 옵션 묶음(소제목) 기능
 ALTER TABLE price_options ADD COLUMN IF NOT EXISTS group_label TEXT;
 
--- 2) 사진 업로드 저장소 (관리자의 "사진 올리기" 버튼)
+-- 2) 한 항목에 사진 여러 장 (한 줄에 하나씩 저장)
+ALTER TABLE portfolio_items ADD COLUMN IF NOT EXISTS images TEXT;
+ALTER TABLE shop_items      ADD COLUMN IF NOT EXISTS images TEXT;
+UPDATE portfolio_items SET images = image_url WHERE (images IS NULL OR images = '') AND image_url <> '';
+UPDATE shop_items      SET images = image_url WHERE (images IS NULL OR images = '') AND image_url <> '';
+
+-- 3) 사진 업로드 저장소 (관리자의 "사진 올리기" 버튼)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('site-images', 'site-images', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
@@ -19,7 +25,7 @@ CREATE POLICY "site_images_insert" ON storage.objects FOR INSERT TO authenticate
 CREATE POLICY "site_images_update" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'site-images') WITH CHECK (bucket_id = 'site-images');
 CREATE POLICY "site_images_delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'site-images');
 
--- 3) 탭 제목을 INAB Shop 으로
+-- 4) 탭 제목을 INAB Shop 으로
 UPDATE site_content
 SET data = data || '{
   "site_name": "INAB Shop",

@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS portfolio_items (
   meta        TEXT,
   description TEXT,
   image_url   TEXT,
+  images      TEXT,
   tag         TEXT,
   anchor      TEXT,
   fit         TEXT DEFAULT 'cover',
@@ -107,6 +108,7 @@ CREATE TABLE IF NOT EXISTS shop_items (
   status      TEXT,
   description TEXT,
   image_url   TEXT,
+  images      TEXT,
   link_url    TEXT,
   link_label  TEXT,
   sort_order  INTEGER DEFAULT 0
@@ -252,17 +254,17 @@ CREATE POLICY "site_images_delete" ON storage.objects FOR DELETE TO authenticate
 
 
 -- portfolio_items 예시 자료 (표가 비어 있을 때만)
-INSERT INTO portfolio_items (title, meta, description, image_url, tag, anchor, fit, focus_x, focus_y, featured, sort_order)
+INSERT INTO portfolio_items (title, meta, description, image_url, images, tag, anchor, fit, focus_x, focus_y, featured, sort_order)
 SELECT * FROM (VALUES
-  ('일러기반 성형', 'Illustration Based', '일러스트의 인상과 비율을 3D 헤드에 옮겨, 원화의 분위기를 살리는 커스텀 성형 작업입니다.', 'assets/images/work-illustration.webp', 'sculpt', 'sculpt', 'cover', 50, 44, TRUE, 10),
-  ('페이셜', 'Facial', 'Face ID 기반 표정 추적을 위해 52종의 쉐이프키를 구성하고 자연스러운 감정 변화를 다듬습니다.', 'assets/images/work-facial.webp', 'facial', 'facial', 'cover', 50, 40, TRUE, 20),
-  ('오리지널 모델 페이셜', 'Original Facial', '오리지널 모델의 고유한 인상을 유지하며 눈·입·볼의 움직임이 자연스럽게 이어지도록 설계합니다.', 'assets/images/work-original-facial.webp', 'facial', 'original-facial', 'cover', 50, 40, FALSE, 30),
-  ('뽀잉눈 / 웃는눈', 'Expression', '캐릭터의 성격을 선명하게 보여주는 뽀잉눈과 웃는눈 표현을 페이셜 흐름에 맞춰 연결합니다.', 'assets/images/work-poying.webp', 'facial', 'poying', 'cover', 50, 40, FALSE, 40),
-  ('멜리고 닐로툰', 'Meligo · NiloToon', '멜리고 환경에서 닐로툰의 빛과 색이 안정적으로 보이도록 셰이더와 재질을 세팅합니다.', 'assets/images/work-meligo.webp', 'nilo', 'meligo', 'cover', 50, 45, TRUE, 50),
-  ('와루도 닐로툰', 'Warudo Pro · NiloToon', 'Warudo Pro 환경에 맞춰 닐로툰 컨버팅과 표현을 조정해 방송 화면의 완성도를 높입니다.', 'assets/images/work-warudo.webp', 'nilo', 'warudo', 'cover', 50, 45, FALSE, 60),
-  ('헤어조합', 'Hair Combination', '여러 헤어 파츠를 한 디자인처럼 연결하고 실루엣과 앞·옆·뒤 균형을 세심하게 정리합니다.', 'assets/images/work-hair.webp', 'styling', 'hair', 'cover', 50, 38, TRUE, 70),
-  ('마지카 클로즈2', 'Magica Cloth 2', '머리카락과 의상 파츠의 움직임을 Magica Cloth 2 환경에 맞게 자연스럽게 세팅합니다.', 'assets/images/work-magica.webp', 'styling', 'magica', 'contain', 50, 35, TRUE, 80),
-  ('헤어 브릿지 · 그라데이션', 'Texture Styling', '캐릭터 팔레트에 맞춘 브릿지와 그라데이션으로 헤어의 포인트와 깊이를 더합니다.', 'assets/images/work-gradient.webp', 'styling', 'gradient', 'cover', 50, 42, FALSE, 90)
+  ('일러기반 성형', 'Illustration Based', '일러스트의 인상과 비율을 3D 헤드에 옮겨, 원화의 분위기를 살리는 커스텀 성형 작업입니다.', 'assets/images/work-illustration.webp', 'assets/images/work-illustration.webp', 'sculpt', 'sculpt', 'cover', 50, 44, TRUE, 10),
+  ('페이셜', 'Facial', 'Face ID 기반 표정 추적을 위해 52종의 쉐이프키를 구성하고 자연스러운 감정 변화를 다듬습니다.', 'assets/images/work-facial.webp', 'assets/images/work-facial.webp', 'facial', 'facial', 'cover', 50, 40, TRUE, 20),
+  ('오리지널 모델 페이셜', 'Original Facial', '오리지널 모델의 고유한 인상을 유지하며 눈·입·볼의 움직임이 자연스럽게 이어지도록 설계합니다.', 'assets/images/work-original-facial.webp', 'assets/images/work-original-facial.webp', 'facial', 'original-facial', 'cover', 50, 40, FALSE, 30),
+  ('뽀잉눈 / 웃는눈', 'Expression', '캐릭터의 성격을 선명하게 보여주는 뽀잉눈과 웃는눈 표현을 페이셜 흐름에 맞춰 연결합니다.', 'assets/images/work-poying.webp', 'assets/images/work-poying.webp', 'facial', 'poying', 'cover', 50, 40, FALSE, 40),
+  ('멜리고 닐로툰', 'Meligo · NiloToon', '멜리고 환경에서 닐로툰의 빛과 색이 안정적으로 보이도록 셰이더와 재질을 세팅합니다.', 'assets/images/work-meligo.webp', 'assets/images/work-meligo.webp', 'nilo', 'meligo', 'cover', 50, 45, TRUE, 50),
+  ('와루도 닐로툰', 'Warudo Pro · NiloToon', 'Warudo Pro 환경에 맞춰 닐로툰 컨버팅과 표현을 조정해 방송 화면의 완성도를 높입니다.', 'assets/images/work-warudo.webp', 'assets/images/work-warudo.webp', 'nilo', 'warudo', 'cover', 50, 45, FALSE, 60),
+  ('헤어조합', 'Hair Combination', '여러 헤어 파츠를 한 디자인처럼 연결하고 실루엣과 앞·옆·뒤 균형을 세심하게 정리합니다.', 'assets/images/work-hair.webp', 'assets/images/work-hair.webp', 'styling', 'hair', 'cover', 50, 38, TRUE, 70),
+  ('마지카 클로즈2', 'Magica Cloth 2', '머리카락과 의상 파츠의 움직임을 Magica Cloth 2 환경에 맞게 자연스럽게 세팅합니다.', 'assets/images/work-magica.webp', 'assets/images/work-magica.webp', 'styling', 'magica', 'contain', 50, 35, TRUE, 80),
+  ('헤어 브릿지 · 그라데이션', 'Texture Styling', '캐릭터 팔레트에 맞춘 브릿지와 그라데이션으로 헤어의 포인트와 깊이를 더합니다.', 'assets/images/work-gradient.webp', 'assets/images/work-gradient.webp', 'styling', 'gradient', 'cover', 50, 42, FALSE, 90)
 ) AS seed
 WHERE NOT EXISTS (SELECT 1 FROM portfolio_items);
 

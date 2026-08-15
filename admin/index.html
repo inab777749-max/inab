@@ -120,6 +120,41 @@
     .savebar__state { color: var(--muted); font-size: 0.8rem; }
     .savebar__state.is-dirty { color: var(--danger); font-weight: 700; }
 
+    .gal__nav { display: flex; gap: 6px; align-items: center; }
+    .gal__pos { min-width: 46px; color: var(--deep); font-size: 0.78rem; font-weight: 700; text-align: center; }
+    .gal__step { width: 30px; height: 30px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff; cursor: pointer; }
+    .gal__step:disabled { opacity: 0.35; cursor: default; }
+
+    .catbar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .catbar__btn { padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--body); font-size: 0.8rem; font-weight: 600; cursor: pointer; }
+    .catbar__btn.is-active { border-color: var(--deep); background: var(--deep); color: #fff; }
+    .catbar__btn span { opacity: 0.7; font-size: 0.74rem; }
+
+    .cal { display: grid; grid-template-columns: 1fr 320px; gap: 16px; }
+    .cal__head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .cal__title { font-family: var(--serif); font-size: 1.1rem; font-weight: 700; }
+    .cal__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+    .cal__wd { padding: 6px 0; color: var(--muted); font-size: 0.74rem; font-weight: 700; text-align: center; }
+    .cal__day { min-height: 78px; padding: 6px 7px; border: 1px solid var(--line); border-radius: 9px; background: #fff; font-size: 0.72rem; text-align: left; cursor: pointer; overflow: hidden; }
+    .cal__day:hover { border-color: var(--violet); }
+    .cal__day.is-out { background: var(--pale-2); opacity: 0.5; cursor: default; }
+    .cal__day.is-on { border-color: var(--deep); box-shadow: 0 0 0 2px rgba(101,70,159,.18); }
+    .cal__num { display: block; margin-bottom: 4px; color: var(--ink); font-weight: 700; }
+    .cal__chip { display: block; margin-bottom: 3px; padding: 2px 6px; border-radius: 5px; color: #fff; font-size: 0.68rem; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chip--holiday { background: #b4485f; }
+    .chip--closed  { background: #6f6b7a; }
+    .chip--waiting { background: #c79a3f; }
+    .chip--working { background: #4a7fb5; }
+    .chip--done    { background: #3f7d63; }
+    .cal__side { padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--pale-2); }
+    .cal__side h4 { margin: 0 0 4px; font-family: var(--serif); font-size: 1rem; }
+    .cal__hint { margin: 0 0 12px; color: var(--muted); font-size: 0.74rem; }
+    .cal__row { display: grid; gap: 6px; margin-bottom: 10px; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+    .cal__row .btn--danger { justify-self: end; }
+    .cal__legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; font-size: 0.72rem; color: var(--body); }
+    .cal__legend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; border-radius: 3px; vertical-align: middle; }
+    @media (max-width: 900px) { .cal { grid-template-columns: 1fr; } }
+
     #toast { position: fixed; bottom: 26px; left: 50%; z-index: 999; padding: 12px 22px; border-radius: 999px; color: #fff; background: #3b3346; font-size: 0.85rem; opacity: 0; transform: translateX(-50%) translateY(12px); transition: opacity 0.25s ease, transform 0.25s ease; pointer-events: none; }
     #toast.is-on { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -252,6 +287,30 @@
     if (field.type === 'date') {
       return '<input type="date" id="' + id + '" value="' + esc(val.slice(0, 10)) + '">';
     }
+    if (field.type === 'gallery') {
+      const ratio = field.ratio || '4 / 3';
+      return '<div class="imgbox" data-gal="' + id + '">'
+        + '<input type="hidden" id="' + id + '" value="' + esc(val) + '">'
+        + '<div class="imgbox__frame" style="aspect-ratio:' + ratio + '">'
+        + '<img data-gal-img alt=""><span class="imgbox__tag" data-gal-tag></span></div>'
+        + '<div class="imgbox__side">'
+        + '<div class="gal__nav">'
+        + '<button class="gal__step" type="button" data-gal-step="-1" aria-label="이전 사진">‹</button>'
+        + '<span class="gal__pos" data-gal-pos>0 / 0</span>'
+        + '<button class="gal__step" type="button" data-gal-step="1" aria-label="다음 사진">›</button>'
+        + '</div>'
+        + '<input type="text" data-gal-url placeholder="사진을 올리거나 주소를 붙여넣으세요">'
+        + '<div class="imgbox__row">'
+        + '<label class="btn btn--sm btn--primary" for="up_' + id + '">사진 올리기</label>'
+        + '<input type="file" id="up_' + id + '" accept="image/*" data-upload-for="' + id + '" data-upload-gal hidden>'
+        + '<button class="btn btn--sm" type="button" data-gal-add>＋ 사진 추가</button>'
+        + '<button class="btn btn--sm" type="button" data-gal-del>이 사진 삭제</button>'
+        + '<span class="imgbox__state" data-state-for="' + id + '"></span></div>'
+        + '<div class="imgbox__spec"><b>규격</b> ' + esc(field.spec || '')
+        + '<br>여러 장이면 첫 장이 카드에 나오고, 방문자는 확대 화면에서 ‹ › 로 넘겨봅니다.'
+        + ' GIF·움직이는 WEBP 는 압축 없이 그대로 올라갑니다.</div>'
+        + '</div></div>';
+    }
     if (field.type === 'image') {
       const ratio = field.ratio || '4 / 3';
       const fallback = field.fallback || '';
@@ -287,7 +346,7 @@
 
   function readField(field, idPrefix) {
     const node = document.getElementById(idPrefix + field.key);
-    if (!node) return null;
+    if (!node) return undefined;
     if (field.type === 'checkbox') return node.checked;
     if (field.type === 'number') return node.value === '' ? null : Number(node.value);
     return node.value;
@@ -301,16 +360,69 @@
     return (index + 1) + '. ' + (value || '(내용 없음)');
   }
 
+  const colFilter = {};
+
+  /* slug|label lines from the matching content key */
+  function categories(name) {
+    const key = name === 'portfolio_items' ? 'portfolio_cats'
+      : (name === 'price_packages' ? 'price_cats' : null);
+    if (!key) return null;
+    const node = document.getElementById('c_' + key);
+    const raw = node ? node.value : txt(content[key]);
+    return txt(raw).split('\n').map((line) => line.trim()).filter(Boolean).map((line) => {
+      const parts = line.split('|');
+      return { slug: (parts[0] || '').trim(), label: (parts[1] || parts[0] || '').trim() };
+    }).filter((c) => c.slug);
+  }
+
+  function categoryBar(name, rows) {
+    const cats = categories(name);
+    if (!cats || !cats.length) return '';
+    const active = colFilter[name] || 'all';
+    const count = (slug) => rows.filter((r) => txt(r.tag).trim() === slug).length;
+    const buttons = ['<button class="catbar__btn' + (active === 'all' ? ' is-active' : '')
+      + '" type="button" data-cat="' + name + '" data-cat-value="all">전체 <span>'
+      + rows.length + '</span></button>'];
+    cats.forEach((c) => {
+      buttons.push('<button class="catbar__btn' + (active === c.slug ? ' is-active' : '')
+        + '" type="button" data-cat="' + name + '" data-cat-value="' + esc(c.slug) + '">'
+        + esc(c.label) + ' <span>' + count(c.slug) + '</span></button>');
+    });
+    const other = rows.filter((r) => !cats.some((c) => c.slug === txt(r.tag).trim())).length;
+    if (other) {
+      buttons.push('<button class="catbar__btn' + (active === '__none' ? ' is-active' : '')
+        + '" type="button" data-cat="' + name + '" data-cat-value="__none">분류 없음 <span>'
+        + other + '</span></button>');
+    }
+    return '<div class="catbar">' + buttons.join('') + '</div>';
+  }
+
   function renderCollection(name) {
     const spec = S.COLLECTIONS[name];
     const rows = sets[name] || [];
     const wrap = document.getElementById('col-' + name);
     if (!wrap) return;
+    if (name === 'schedule_events') { renderCalendar(); return; }
+    const cats = categories(name);
+    const active = colFilter[name] || 'all';
+    const bar = categoryBar(name, rows);
     if (!rows.length) {
-      wrap.innerHTML = '<p class="empty">아직 등록된 항목이 없습니다. 아래 “새로 추가”를 눌러 시작하세요.</p>';
+      wrap.innerHTML = bar + '<p class="empty">아직 등록된 항목이 없습니다. 위 “새로 추가”를 눌러 시작하세요.</p>';
       return;
     }
-    wrap.innerHTML = rows.map((row, index) => {
+    const visible = rows.map((row, index) => ({ row: row, index: index })).filter((item) => {
+      if (!cats || active === 'all') return true;
+      const tag = txt(item.row.tag).trim();
+      if (active === '__none') return !cats.some((c) => c.slug === tag);
+      return tag === active;
+    });
+    if (!visible.length) {
+      wrap.innerHTML = bar + '<p class="empty">이 분류에는 아직 항목이 없습니다. “새로 추가”를 누르면 이 분류로 만들어집니다.</p>';
+      return;
+    }
+    wrap.innerHTML = bar + visible.map((item) => {
+      const row = item.row;
+      const index = item.index;
       const prefix = name + '_' + index + '_';
       const fields = spec.fields.map((field) => fieldHtml(field, row[field.key], prefix)).join('');
       return '<div class="row" data-row="' + name + '" data-index="' + index + '">'
@@ -322,6 +434,7 @@
         + '</span></div>'
         + '<div class="grid">' + fields + '</div></div>';
     }).join('');
+    galPaintAll();
     refreshThumbs();
   }
 
@@ -333,7 +446,7 @@
       const next = Object.assign({}, row);
       spec.fields.forEach((field) => {
         const value = readField(field, prefix);
-        if (value !== null || field.type === 'number') next[field.key] = value;
+        if (value !== undefined) next[field.key] = value;
       });
       return next;
     });
@@ -344,7 +457,7 @@
       tab.cards.forEach((card) => {
         card.fields.forEach((field) => {
           const value = readField(field, 'c_');
-          if (value !== null) content[field.key] = value;
+          if (value !== undefined) content[field.key] = value;
         });
       });
     });
@@ -357,8 +470,93 @@
       if (node) content[item.key] = node.value;
     });
     Object.keys(S.COLLECTIONS).forEach((name) => {
+      if (name === 'schedule_events') return;   /* edited straight into the objects */
       if (document.getElementById('col-' + name)) sets[name] = collectRows(name);
     });
+  }
+
+
+  /* -------------------------------------------------- schedule calendar */
+  const KINDS = [['holiday', '휴일'], ['closed', '마감'], ['waiting', '대기'], ['working', '진행'], ['done', '완료']];
+  const WD = ['월', '화', '수', '목', '금', '토', '일'];
+  const cal = { calendar: 'package', year: 0, month: 0, day: null };
+
+  function calDate(year, month, day) {
+    return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  }
+
+  function calRows(date) {
+    return (sets.schedule_events || [])
+      .map((row, index) => ({ row: row, index: index }))
+      .filter((item) => txt(item.row.calendar) === cal.calendar
+        && txt(item.row.event_date).slice(0, 10) === date);
+  }
+
+  function renderCalendar() {
+    const wrap = document.getElementById('col-schedule_events');
+    if (!wrap) return;
+    const now = new Date();
+    if (!cal.year) {
+      cal.year = parseInt(txt(content.schedule_year), 10) || now.getFullYear();
+      cal.month = parseInt(txt(content.schedule_month), 10) || (now.getMonth() + 1);
+    }
+    const first = new Date(cal.year, cal.month - 1, 1);
+    const offset = (first.getDay() + 6) % 7;
+    const days = new Date(cal.year, cal.month, 0).getDate();
+
+    let cells = WD.map((w) => '<div class="cal__wd">' + w + '</div>').join('');
+    for (let i = 0; i < offset; i += 1) cells += '<div class="cal__day is-out"></div>';
+    for (let day = 1; day <= days; day += 1) {
+      const date = calDate(cal.year, cal.month, day);
+      const chips = calRows(date).map((item) => '<span class="cal__chip chip--'
+        + esc(txt(item.row.kind) || 'waiting') + '">' + esc(txt(item.row.label) || '(문구 없음)')
+        + '</span>').join('');
+      cells += '<button class="cal__day' + (cal.day === date ? ' is-on' : '') + '" type="button" data-cal-day="'
+        + date + '"><span class="cal__num">' + day + '</span>' + chips + '</button>';
+    }
+
+    const tabs = [['package', txt(content.schedule_tab1) || '패키지 작업'],
+                  ['nilo', txt(content.schedule_tab2) || '닐로툰 & 뚜따']]
+      .map((t) => '<button class="catbar__btn' + (cal.calendar === t[0] ? ' is-active' : '')
+        + '" type="button" data-cal-tab="' + t[0] + '">' + esc(t[1]) + '</button>').join('');
+
+    const legend = KINDS.map((k) => '<span><i class="chip--' + k[0] + '"></i>' + k[1] + '</span>').join('');
+
+    wrap.innerHTML = '<div class="cal"><div>'
+      + '<div class="catbar">' + tabs + '</div>'
+      + '<div class="cal__head"><div class="gal__nav">'
+      + '<button class="gal__step" type="button" data-cal-move="-1" aria-label="이전 달">‹</button>'
+      + '<span class="cal__title">' + cal.year + '년 ' + cal.month + '월</span>'
+      + '<button class="gal__step" type="button" data-cal-move="1" aria-label="다음 달">›</button>'
+      + '</div><button class="btn btn--sm" type="button" data-cal-today>이번 달</button></div>'
+      + '<div class="cal__grid">' + cells + '</div>'
+      + '<div class="cal__legend">' + legend + '</div>'
+      + '</div>' + calSide() + '</div>';
+  }
+
+  function calSide() {
+    if (!cal.day) {
+      return '<div class="cal__side"><h4>날짜를 고르세요</h4>'
+        + '<p class="cal__hint">달력에서 날짜를 누르면 그 날의 일정을 여기서 넣고 고칠 수 있습니다.'
+        + ' 하루에 여러 건도 됩니다.</p>'
+        + '<p class="cal__hint">달력에 보이는 달은 🗓 위쪽 “표시 연도·월”에서 정합니다.</p></div>';
+    }
+    const rows = calRows(cal.day);
+    const body = rows.length ? rows.map((item) => {
+      const prefix = 'cal_' + item.index + '_';
+      const options = KINDS.map((k) => '<option value="' + k[0] + '"'
+        + (txt(item.row.kind) === k[0] ? ' selected' : '') + '>' + k[1] + '</option>').join('');
+      return '<div class="cal__row">'
+        + '<select data-cal-field="kind" data-cal-index="' + item.index + '">' + options + '</select>'
+        + '<input type="text" data-cal-field="label" data-cal-index="' + item.index
+        + '" value="' + esc(txt(item.row.label)) + '" placeholder="칸에 보일 문구 (예: 대기 1건)">'
+        + '<button class="btn btn--danger" type="button" data-cal-del="' + item.index + '" aria-label="삭제">✕</button>'
+        + '</div>';
+    }).join('') : '<p class="cal__hint">이 날은 비어 있습니다.</p>';
+    return '<div class="cal__side"><h4>' + cal.day.replace(/-/g, '. ') + '</h4>'
+      + '<p class="cal__hint">종류에 따라 달력 칸의 색이 달라집니다.</p>'
+      + body
+      + '<button class="btn btn--sm btn--primary" type="button" data-cal-add>＋ 이 날에 항목 추가</button></div>';
   }
 
   /* ------------------------------------------------------------ rendering */
@@ -455,6 +653,7 @@
 
     Object.keys(S.COLLECTIONS).forEach(renderCollection);
     renderInquiries();
+    galPaintAll();
     refreshThumbs();
     updateContrast();
   }
@@ -484,6 +683,44 @@
     });
   }
 
+  function galList(wrap) {
+    const store = wrap.querySelector('input[type=hidden]');
+    if (!store.value.trim()) return [];
+    return store.value.split('\n').map((v) => v.trim());
+  }
+
+  function galWrite(wrap, list) {
+    wrap.querySelector('input[type=hidden]').value = list.join('\n');
+  }
+
+  function galPaint(wrap) {
+    const list = galList(wrap);
+    let index = Number(wrap.dataset.index || 0);
+    if (index >= list.length) index = Math.max(0, list.length - 1);
+    wrap.dataset.index = String(index);
+    const img = wrap.querySelector('[data-gal-img]');
+    const url = wrap.querySelector('[data-gal-url]');
+    const pos = wrap.querySelector('[data-gal-pos]');
+    const tag = wrap.querySelector('[data-gal-tag]');
+    const current = list[index] || '';
+    if (url && document.activeElement !== url) url.value = current;
+    if (pos) pos.textContent = (list.length ? index + 1 : 0) + ' / ' + list.length;
+    if (tag) tag.textContent = list.length ? (index === 0 ? '카드에 나오는 사진' : '확대 화면에서만') : '사진 없음';
+    const src = resolvePath(current);
+    if (img) {
+      img.style.visibility = current ? 'visible' : 'hidden';
+      if (img.getAttribute('src') !== src) {
+        img.setAttribute('referrerpolicy', 'no-referrer');
+        img.src = src;
+      }
+    }
+    wrap.querySelectorAll('[data-gal-step]').forEach((b) => { b.disabled = list.length < 2; });
+  }
+
+  function galPaintAll() {
+    document.querySelectorAll('[data-gal]').forEach(galPaint);
+  }
+
   async function handleUpload(input) {
     const targetId = input.dataset.uploadFor;
     const target = document.getElementById(targetId);
@@ -505,7 +742,16 @@
       toast('올리지 못했습니다. Supabase 저장소 설정을 확인해 주세요.');
       return;
     }
-    target.value = url;
+    const wrap = input.dataset.uploadGal !== undefined ? input.closest('[data-gal]') : null;
+    if (wrap) {
+      const list = galList(wrap);
+      const index = Number(wrap.dataset.index || 0);
+      if (list.length) list[index] = url; else list.push(url);
+      galWrite(wrap, list);
+      galPaint(wrap);
+    } else {
+      target.value = url;
+    }
     if (state) state.textContent = moving ? '올렸습니다 (움직임 유지)' : '올렸습니다';
     setTimeout(() => { if (state) state.textContent = ''; }, 2500);
     refreshThumbs();
@@ -581,6 +827,8 @@
         else if (field.type === 'number') blank[field.key] = 50;
         else blank[field.key] = '';
       });
+      const active = colFilter[name];
+      if (active && active !== 'all' && active !== '__none' && 'tag' in blank) blank.tag = active;
       rows.push(blank);
       renderCollection(name);
       markDirty();
@@ -623,6 +871,65 @@
       return;
     }
 
+    const calTab = target.closest('[data-cal-tab]');
+    if (calTab) { cal.calendar = calTab.dataset.calTab; cal.day = null; renderCalendar(); return; }
+
+    const calMove = target.closest('[data-cal-move]');
+    if (calMove) {
+      const next = new Date(cal.year, cal.month - 1 + Number(calMove.dataset.calMove), 1);
+      cal.year = next.getFullYear();
+      cal.month = next.getMonth() + 1;
+      cal.day = null;
+      renderCalendar();
+      return;
+    }
+
+    if (target.closest('[data-cal-today]')) {
+      const now = new Date();
+      cal.year = now.getFullYear();
+      cal.month = now.getMonth() + 1;
+      cal.day = null;
+      renderCalendar();
+      return;
+    }
+
+    const calDay = target.closest('[data-cal-day]');
+    if (calDay) { cal.day = calDay.dataset.calDay; renderCalendar(); return; }
+
+    if (target.closest('[data-cal-add]')) {
+      if (!cal.day) return;
+      (sets.schedule_events = sets.schedule_events || []).push({
+        calendar: cal.calendar, event_date: cal.day, kind: 'waiting', label: ''
+      });
+      renderCalendar();
+      markDirty();
+      return;
+    }
+
+    const calDel = target.closest('[data-cal-del]');
+    if (calDel) {
+      const index = Number(calDel.dataset.calDel);
+      const row = sets.schedule_events[index];
+      if (!window.confirm('이 일정을 지울까요?')) return;
+      if (row && row.id) {
+        const ok = await deleteRow('schedule_events', row.id);
+        if (!ok) { toast('삭제하지 못했습니다.'); return; }
+      }
+      sets.schedule_events.splice(index, 1);
+      renderCalendar();
+      markDirty();
+      toast('삭제했습니다.');
+      return;
+    }
+
+    const cat = target.closest('[data-cat]');
+    if (cat) {
+      syncFromInputs();
+      colFilter[cat.dataset.cat] = cat.dataset.catValue;
+      renderCollection(cat.dataset.cat);
+      return;
+    }
+
     const preset = target.closest('[data-preset]');
     if (preset) {
       const values = S.THEME_PRESETS[preset.dataset.preset];
@@ -655,6 +962,42 @@
       return;
     }
 
+    const galStep = target.closest('[data-gal-step]');
+    if (galStep) {
+      const wrap = galStep.closest('[data-gal]');
+      const list = galList(wrap);
+      if (list.length > 1) {
+        const next = (Number(wrap.dataset.index || 0) + Number(galStep.dataset.galStep) + list.length) % list.length;
+        wrap.dataset.index = String(next);
+        galPaint(wrap);
+      }
+      return;
+    }
+
+    if (target.closest('[data-gal-add]')) {
+      const wrap = target.closest('[data-gal]');
+      const list = galList(wrap);
+      list.push('');
+      galWrite(wrap, list);
+      wrap.dataset.index = String(list.length - 1);
+      galPaint(wrap);
+      const url = wrap.querySelector('[data-gal-url]');
+      if (url) url.focus();
+      markDirty();
+      return;
+    }
+
+    if (target.closest('[data-gal-del]')) {
+      const wrap = target.closest('[data-gal]');
+      const list = galList(wrap);
+      if (!list.length) return;
+      list.splice(Number(wrap.dataset.index || 0), 1);
+      galWrite(wrap, list);
+      galPaint(wrap);
+      markDirty();
+      return;
+    }
+
     const clear = target.closest('[data-clear-for]');
     if (clear) {
       const field = document.getElementById(clear.dataset.clearFor);
@@ -674,8 +1017,27 @@
     }
   });
 
+  function calEdit(target) {
+    const index = Number(target.dataset.calIndex);
+    const row = (sets.schedule_events || [])[index];
+    if (!row) return;
+    row[target.dataset.calField] = target.value;
+    if (target.dataset.calField === 'kind') renderCalendar();
+    markDirty();
+  }
+
   document.addEventListener('input', (event) => {
     const target = event.target;
+    if (target.dataset && target.dataset.calField !== undefined) { calEdit(target); return; }
+    if (target.dataset && target.dataset.galUrl !== undefined) {
+      const wrap = target.closest('[data-gal]');
+      const list = galList(wrap);
+      const index = Number(wrap.dataset.index || 0);
+      if (list.length) list[index] = target.value.trim(); else list.push(target.value.trim());
+      galWrite(wrap, list);
+      markDirty();
+      return;
+    }
     if (!target.id) { markDirty(); return; }
     if (target.id.indexOf('pal_') === 0) {
       const key = target.id.slice(4);
@@ -699,6 +1061,7 @@
 
   document.addEventListener('change', (event) => {
     if (event.target.dataset && event.target.dataset.uploadFor) { handleUpload(event.target); return; }
+    if (event.target.dataset && event.target.dataset.calField !== undefined) { calEdit(event.target); return; }
     refreshThumbs();
     markDirty();
   });
@@ -714,7 +1077,15 @@
     ]);
     content = row || {};
     sets = {};
-    names.forEach((name, index) => { sets[name] = rest[index] || []; });
+    names.forEach((name, index) => {
+      sets[name] = rest[index] || [];
+      const hasGallery = S.COLLECTIONS[name].fields.some((f) => f.type === 'gallery');
+      if (hasGallery) {
+        sets[name].forEach((item) => {
+          if (!txt(item.images).trim() && txt(item.image_url).trim()) item.images = txt(item.image_url).trim();
+        });
+      }
+    });
     sets.inquiries = rest[names.length] || [];
     build();
     markClean('불러왔습니다');
@@ -732,10 +1103,18 @@
         const rows = sets[name] || [];
         for (const row of rows) {
           const payload = {};
+          if ('images' in row) {
+            const first = String(row.images || '').split('\n').map((v) => v.trim()).filter(Boolean)[0] || '';
+            payload.image_url = first;
+          }
           S.COLLECTIONS[name].fields.forEach((field) => {
             let value = row[field.key];
             if (field.type === 'number') value = (value === '' || value == null) ? null : Number(value);
             if (field.type === 'date' && !value) value = null;
+            if (field.type === 'gallery') {
+              value = String(value == null ? '' : value).split('\n')
+                .map((v) => v.trim()).filter(Boolean).join('\n');
+            }
             payload[field.key] = value;
           });
           if (row.id) await updateRow(name, row.id, payload);

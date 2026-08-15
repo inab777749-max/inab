@@ -22,7 +22,7 @@ const COLLECTIONS = {
       { key: 'title', label: '작업명', type: 'text', help: '카드 제목. 상단 메뉴 하위 목록에도 같은 이름이 들어갑니다', width: 'half' },
       { key: 'meta', label: '영문 라벨', type: 'text', help: '제목 위 작은 글씨. 예: Illustration Based', width: 'half' },
       { key: 'description', label: '설명', type: 'textarea', help: '카드 본문과 확대 화면에 같이 쓰입니다. 2~3줄 권장' },
-      { key: 'image_url', label: '이미지 주소', type: 'image', help: '포트폴리오 카드와 확대 화면에 쓰이는 작업 사진', spec: '권장 1200×900 (가로 4:3) · 세로로 긴 사진은 아래 “카드 표시 방식”을 전체 보기로', ratio: '4 / 3' },
+      { key: 'images', label: '작업 사진', type: 'gallery', help: '여러 장 넣을 수 있습니다. 첫 장이 카드에 나오고, 방문자는 확대 화면에서 넘겨봅니다. GIF·움직이는 WEBP 도 됩니다', spec: '권장 1200×900 (가로 4:3) · 세로로 긴 사진은 아래 “카드 표시 방식”을 전체 보기로', ratio: '4 / 3' },
       { key: 'tag', label: '분류', type: 'text', help: '아래 분류 목록의 영문 값과 같게. 예: sculpt / facial / nilo / styling', width: 'half' },
       { key: 'anchor', label: '앵커 아이디', type: 'text', help: '메뉴에서 이 카드로 바로 가는 주소. 영문 소문자·하이픈. 예: original-facial', width: 'half' },
       { key: 'fit', label: '카드 표시 방식', type: 'select', options: [['cover', '꽉 채우기 (잘림)'], ['contain', '전체 보기 (여백은 흐린 배경)']], help: '세로로 긴 사진은 전체 보기를 쓰면 잘리지 않습니다', width: 'half' },
@@ -137,7 +137,7 @@ const COLLECTIONS = {
       { key: 'status', label: '상태 배지', type: 'text', width: 'half', help: '이미지 위 배지. 예: 판매중 / 예약 / 완료. 비우면 배지 없음' },
       { key: 'sort_order', label: '순서', type: 'number', width: 'half', help: '작은 값이 먼저' },
       { key: 'description', label: '설명', type: 'textarea', help: '구성·수정 범위 등' },
-      { key: 'image_url', label: '이미지 주소', type: 'image', help: '개인작 카드 사진', spec: '권장 900×1200 (세로 3:4) · 이 비율로 잘립니다', ratio: '3 / 4' },
+      { key: 'images', label: '상품 사진', type: 'gallery', help: '여러 장 넣을 수 있습니다. 첫 장이 카드에 나오고, 방문자는 확대 화면에서 넘겨봅니다. GIF 도 됩니다', spec: '권장 900×1200 (세로 3:4) · 이 비율로 잘립니다', ratio: '3 / 4' },
       { key: 'link_url', label: '링크 주소', type: 'text', width: 'half', help: '구매·문의로 이동할 주소. 비우면 링크 없음' },
       { key: 'link_label', label: '링크 문구', type: 'text', width: 'half', help: '비우면 "자세히 보기"' }
     ]
