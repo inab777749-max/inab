@@ -81,8 +81,20 @@
 
     .rows { display: grid; gap: 14px; }
     .row { padding: 18px; border: 1px solid var(--line); border-radius: 13px; background: var(--pale-2); }
+    .row.is-collapsed { padding: 12px 18px; }
+    .row.is-collapsed .row__body { display: none; }
+    .row.is-dragging { opacity: 0.4; }
+    .row.is-over { border-color: var(--deep); box-shadow: 0 -3px 0 var(--deep) inset; }
+    .row.is-over-after { border-color: var(--deep); box-shadow: 0 3px 0 var(--deep) inset; }
     .row__head { display: flex; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 13px; }
-    .row__name { font-size: 0.85rem; font-weight: 700; color: var(--deep); }
+    .row.is-collapsed .row__head { margin-bottom: 0; }
+    .row__grab { display: flex; min-width: 0; flex: 1; gap: 9px; align-items: center; }
+    .row__handle { padding: 2px 6px; border: 0; border-radius: 6px; background: none; color: var(--muted); font-size: 1rem; line-height: 1; cursor: grab; touch-action: none; user-select: none; }
+    .row__handle:active { cursor: grabbing; }
+    .row__toggle { padding: 2px 7px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--deep); font-size: 0.7rem; line-height: 1.5; cursor: pointer; }
+    .row__name { overflow: hidden; color: var(--deep); font-size: 0.85rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+    .rows__tools { display: flex; gap: 6px; margin-bottom: 10px; }
+    .rows__hint { margin: 0 0 12px; color: var(--muted); font-size: 0.75rem; }
     .row__tools { display: flex; gap: 4px; }
     .row__tools .btn { padding: 5px 9px; font-size: 0.75rem; }
 
@@ -334,6 +346,9 @@
 
   function fieldHtml(field, value, idPrefix) {
     const id = idPrefix + field.key;
+    if (field.hidden) {
+      return '<input type="hidden" id="' + id + '" value="' + esc(txt(value)) + '">';
+    }
     const full = field.width === 'half' ? '' : ' field--full';
     const help = field.help ? '<span class="help">' + esc(field.help) + '</span>' : '';
     if (field.type === 'checkbox') {
@@ -361,6 +376,21 @@
   }
 
   const colFilter = {};
+  const collapsed = new Set();
+  let uidSeed = 0;
+  let dragFrom = null;
+
+  function rowUid(row) {
+    if (!row._uid) { uidSeed += 1; row._uid = 'r' + uidSeed; }
+    return row._uid;
+  }
+
+  /* Order follows the list itself, so the numbers are rewritten after any move. */
+  function renumber(name) {
+    const spec = S.COLLECTIONS[name];
+    if (!spec.fields.some((f) => f.key === 'sort_order')) return;
+    (sets[name] || []).forEach((row, index) => { row.sort_order = (index + 1) * 10; });
+  }
 
   /* slug|label lines from the matching content key */
   function categories(name) {
@@ -420,19 +450,27 @@
       wrap.innerHTML = bar + '<p class="empty">이 분류에는 아직 항목이 없습니다. “새로 추가”를 누르면 이 분류로 만들어집니다.</p>';
       return;
     }
-    wrap.innerHTML = bar + visible.map((item) => {
+    const tools = '<div class="rows__tools">'
+      + '<button class="btn btn--sm" type="button" data-foldall="' + name + '" data-shut="1">모두 접기</button>'
+      + '<button class="btn btn--sm" type="button" data-foldall="' + name + '" data-shut="0">모두 펼치기</button></div>'
+      + '<p class="rows__hint">⠿ 를 끌어서 순서를 바꿀 수 있습니다. 위에 있을수록 사이트에서 먼저 나옵니다.</p>';
+    wrap.innerHTML = bar + tools + visible.map((item) => {
       const row = item.row;
       const index = item.index;
       const prefix = name + '_' + index + '_';
       const fields = spec.fields.map((field) => fieldHtml(field, row[field.key], prefix)).join('');
-      return '<div class="row" data-row="' + name + '" data-index="' + index + '">'
-        + '<div class="row__head"><span class="row__name">' + esc(rowLabel(name, row, index)) + '</span>'
+      const shut = collapsed.has(rowUid(row));
+      return '<div class="row' + (shut ? ' is-collapsed' : '') + '" data-row="' + name + '" data-index="' + index + '" data-uid="' + rowUid(row) + '">'
+        + '<div class="row__head"><span class="row__grab">'
+        + '<button class="row__handle" type="button" data-drag="' + name + '" data-index="' + index + '" aria-label="끌어서 순서 바꾸기" title="끌어서 순서 바꾸기">⠿</button>'
+        + '<button class="row__toggle" type="button" data-fold="' + rowUid(row) + '" aria-expanded="' + (!shut) + '">' + (shut ? '▸ 펼치기' : '▾ 접기') + '</button>'
+        + '<span class="row__name" data-fold="' + rowUid(row) + '">' + esc(rowLabel(name, row, index)) + '</span></span>'
         + '<span class="row__tools">'
         + '<button class="btn" type="button" data-move="' + name + '" data-dir="-1" data-index="' + index + '"' + (index === 0 ? ' disabled' : '') + '>▲</button>'
         + '<button class="btn" type="button" data-move="' + name + '" data-dir="1" data-index="' + index + '"' + (index === rows.length - 1 ? ' disabled' : '') + '>▼</button>'
         + '<button class="btn btn--danger" type="button" data-remove="' + name + '" data-index="' + index + '" aria-label="삭제">✕</button>'
         + '</span></div>'
-        + '<div class="grid">' + fields + '</div></div>';
+        + '<div class="row__body"><div class="grid">' + fields + '</div></div></div>';
     }).join('');
     galPaintAll();
     refreshThumbs();
@@ -829,7 +867,9 @@
       });
       const active = colFilter[name];
       if (active && active !== 'all' && active !== '__none' && 'tag' in blank) blank.tag = active;
-      rows.push(blank);
+      if (name === 'portfolio_items') rows.unshift(blank); else rows.push(blank);
+      renumber(name);
+      collapsed.delete(rowUid(blank));
       renderCollection(name);
       markDirty();
       return;
@@ -847,6 +887,7 @@
         if (!ok) { toast('삭제하지 못했습니다.'); return; }
       }
       sets[name].splice(index, 1);
+      renumber(name);
       renderCollection(name);
       markDirty();
       toast('삭제했습니다.');
@@ -865,7 +906,7 @@
       const tmp = rows[index];
       rows[index] = rows[next];
       rows[next] = tmp;
-      rows.forEach((row, i) => { if ('sort_order' in row) row.sort_order = (i + 1) * 10; });
+      renumber(name);
       renderCollection(name);
       markDirty();
       return;
@@ -919,6 +960,33 @@
       renderCalendar();
       markDirty();
       toast('삭제했습니다.');
+      return;
+    }
+
+    const fold = target.closest('[data-fold]');
+    if (fold) {
+      const uid = fold.dataset.fold;
+      if (collapsed.has(uid)) collapsed.delete(uid); else collapsed.add(uid);
+      const row = document.querySelector('[data-uid="' + uid + '"]');
+      if (row) {
+        const shut = collapsed.has(uid);
+        row.classList.toggle('is-collapsed', shut);
+        const button = row.querySelector('[data-fold]');
+        button.textContent = shut ? '▸ 펼치기' : '▾ 접기';
+        button.setAttribute('aria-expanded', String(!shut));
+      }
+      return;
+    }
+
+    const foldAll = target.closest('[data-foldall]');
+    if (foldAll) {
+      const name = foldAll.dataset.foldall;
+      const shut = foldAll.dataset.shut === '1';
+      (sets[name] || []).forEach((row) => {
+        if (shut) collapsed.add(rowUid(row)); else collapsed.delete(rowUid(row));
+      });
+      syncFromInputs();
+      renderCollection(name);
       return;
     }
 
@@ -1017,6 +1085,70 @@
     }
   });
 
+  function dragRows(name) {
+    return [...document.querySelectorAll('.row[data-row="' + name + '"]')];
+  }
+
+  function clearDragMarks() {
+    document.querySelectorAll('.row').forEach((row) => {
+      row.classList.remove('is-dragging', 'is-over', 'is-over-after');
+    });
+  }
+
+  function dragTarget(event) {
+    if (!dragFrom) return null;
+    const under = document.elementFromPoint(event.clientX, event.clientY);
+    const row = under && under.closest ? under.closest('.row') : null;
+    if (!row || row.dataset.row !== dragFrom.name) return null;
+    const box = row.getBoundingClientRect();
+    return { row: row, after: event.clientY > box.top + box.height / 2 };
+  }
+
+  document.addEventListener('pointerdown', (event) => {
+    const handle = event.target.closest && event.target.closest('[data-drag]');
+    if (!handle) return;
+    event.preventDefault();
+    dragFrom = { name: handle.dataset.drag, index: Number(handle.dataset.index) };
+    handle.setPointerCapture(event.pointerId);
+    const row = handle.closest('.row');
+    if (row) row.classList.add('is-dragging');
+  });
+
+  document.addEventListener('pointermove', (event) => {
+    if (!dragFrom) return;
+    const edge = 70;
+    if (event.clientY < edge) window.scrollBy(0, -14);
+    else if (event.clientY > window.innerHeight - edge) window.scrollBy(0, 14);
+    const hit = dragTarget(event);
+    dragRows(dragFrom.name).forEach((row) => row.classList.remove('is-over', 'is-over-after'));
+    if (!hit) return;
+    hit.row.classList.toggle('is-over', !hit.after);
+    hit.row.classList.toggle('is-over-after', hit.after);
+  });
+
+  function endDrag(event) {
+    if (!dragFrom) return;
+    const hit = dragTarget(event);
+    const name = dragFrom.name;
+    const from = dragFrom.index;
+    dragFrom = null;
+    clearDragMarks();
+    if (!hit) return;
+    let to = Number(hit.row.dataset.index) + (hit.after ? 1 : 0);
+    if (to === from || to === from + 1) return;
+    syncFromInputs();
+    const rows = sets[name];
+    const moved = rows.splice(from, 1)[0];
+    if (to > from) to -= 1;
+    rows.splice(to, 0, moved);
+    renumber(name);
+    renderCollection(name);
+    markDirty();
+  }
+
+  document.addEventListener('pointerup', endDrag);
+  document.addEventListener('pointercancel', () => { dragFrom = null; clearDragMarks(); });
+
   function calEdit(target) {
     const index = Number(target.dataset.calIndex);
     const row = (sets.schedule_events || [])[index];
@@ -1056,6 +1188,14 @@
       if (label) label.textContent = Number(target.value).toFixed(2).replace(/0$/, '') + '×';
     }
     if (target.dataset && target.type === 'text') refreshThumbs();
+    const row = target.closest ? target.closest('.row') : null;
+    if (row && /_(title|name|question|tab_label)$/.test(target.id || '')) {
+      const label = row.querySelector('.row__name');
+      if (label) {
+        const number = label.textContent.split('.')[0];
+        label.textContent = number + '. ' + (target.value.trim() || '(내용 없음)');
+      }
+    }
     markDirty();
   });
 
@@ -1077,8 +1217,10 @@
     ]);
     content = row || {};
     sets = {};
+    collapsed.clear();
     names.forEach((name, index) => {
       sets[name] = rest[index] || [];
+      if (sets[name].length > 3) sets[name].forEach((item) => collapsed.add(rowUid(item)));
       const hasGallery = S.COLLECTIONS[name].fields.some((f) => f.type === 'gallery');
       if (hasGallery) {
         sets[name].forEach((item) => {

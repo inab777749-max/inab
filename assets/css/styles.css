@@ -271,6 +271,51 @@ button {
 }
 
 /* Header */
+.notice-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 20px;
+  color: #fff;
+  background: var(--deep);
+  font-size: 0.86rem;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+
+.notice-bar a {
+  color: #fff;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.notice-bar[hidden] {
+  display: none;
+}
+
+.intake-closed {
+  padding: 34px 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--pale-2);
+  text-align: center;
+}
+
+.intake-closed__title {
+  margin: 0 0 10px;
+  font-family: var(--serif);
+  font-size: 1.4rem;
+}
+
+.intake-closed__copy {
+  margin: 0;
+  color: var(--body);
+  line-height: 1.75;
+}
+
 .site-header {
   position: sticky;
   z-index: 100;

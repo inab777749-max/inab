@@ -267,11 +267,13 @@
       return;
     }
     button.disabled = true;
+    const body = inquiryText(form);
     const sent = await insertRow("inquiries", {
       contact: value,
       form_title: form.dataset.formTitle || "문의서",
-      message: inquiryText(form)
+      message: body
     });
+    if (sent) notifyDiscord(form.dataset.formTitle || "문의서", value, body);
     button.disabled = false;
     if (sent) {
       status(form, "문의가 전달되었습니다. 답변은 적어주신 연락처로 드립니다.");
@@ -279,6 +281,18 @@
     } else {
       status(form, "전송에 실패했습니다. 복사해서 보내주세요.");
     }
+  }
+
+  /* Optional Discord ping. A failure here never blocks the inquiry itself. */
+  function notifyDiscord(formTitle, contact, body) {
+    const hook = (window.SITE_CONTENT && String(window.SITE_CONTENT.inquiry_webhook || "")).trim();
+    if (!/^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\//.test(hook)) return;
+    const text = ["**새 커미션 문의** — " + formTitle, "연락처: " + contact, "", body].join("\n");
+    fetch(hook, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content: text.slice(0, 1900) })
+    }).catch(() => {});
   }
 
   /* ------------------------------------------------------------ faq search */

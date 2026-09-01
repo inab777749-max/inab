@@ -29,7 +29,7 @@ const COLLECTIONS = {
       { key: 'featured', label: '메인에 노출', type: 'checkbox', help: '메인 Selected Works 줄에 표시. 앞에서부터 5개까지', width: 'half' },
       { key: 'focus_x', label: '초점 가로 %', type: 'number', help: '꽉 채우기일 때 보일 지점. 0=왼쪽 50=가운데 100=오른쪽', width: 'half' },
       { key: 'focus_y', label: '초점 세로 %', type: 'number', help: '0=위 50=가운데 100=아래. 얼굴이 잘리면 값을 줄이세요', width: 'half' },
-      { key: 'sort_order', label: '순서', type: 'number', help: '작은 값이 먼저. 10 단위로 띄우면 나중에 끼워 넣기 쉽습니다', width: 'half' }
+      { key: 'sort_order', label: '순서', type: 'number', hidden: true, help: '목록 순서대로 자동으로 매겨집니다' }
     ]
   },
   collab_artists: {
@@ -317,6 +317,18 @@ const CONTENT_TABS = [
           { key: 'inquiry_title', label: '문의서 제목', type: 'text', width: 'half', help: '구간 제목' },
           { key: 'inquiry_note', label: '문의서 안내', type: 'textarea', help: '제목 오른쪽 작은 글' },
           { key: 'inquiry_summary', label: '문의서 여는 버튼', type: 'text', width: 'half', help: '접혀 있는 상태에서 보이는 줄' }
+        ]
+      },
+      {
+        title: '접수 상태 · 상단 알림', where: '전 페이지 맨 위 띠 + 커미션 안내 페이지 문의서',
+        fields: [
+          { key: 'intake_state', label: '지금 신청을 받나요', type: 'select', width: 'half', options: [['open', '받는 중'], ['closed', '마감 (문의서 잠금)']], help: '마감으로 두면 문의서가 열리지 않고 아래 마감 안내가 대신 나옵니다' },
+          { key: 'intake_closed_title', label: '마감 안내 제목', type: 'text', width: 'half', help: '예: 지금은 신청을 받지 않습니다' },
+          { key: 'intake_closed_copy', label: '마감 안내 내용', type: 'textarea', help: '다시 여는 시기나 대기 신청 방법을 적어주세요' },
+          { key: 'banner_text', label: '상단 띠 문구', type: 'text', help: '전 페이지 맨 위에 한 줄로 뜹니다. 비우면 띠가 나오지 않습니다. 마감 상태면 비워도 마감 제목이 대신 뜹니다' },
+          { key: 'banner_link_label', label: '띠 링크 문구', type: 'text', width: 'half', help: '비우면 링크 없이 문구만' },
+          { key: 'banner_link_url', label: '띠 링크 주소', type: 'text', width: 'half', help: '예: schedule.html' },
+          { key: 'inquiry_webhook', label: '디스코드 알림 주소', type: 'text', help: '디스코드 채널 설정 → 연동 → 웹후크 에서 만든 주소. 넣어두면 문의가 올 때 그 채널로 알림이 갑니다. 비우면 알림 없음. 이 주소는 페이지 소스에서 보이므로, 악용되면 디스코드에서 웹후크를 지우고 새로 만드세요' }
         ]
       },
       {

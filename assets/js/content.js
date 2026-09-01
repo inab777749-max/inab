@@ -490,6 +490,39 @@
     }
   }
 
+  /* Top strip: custom text wins, otherwise the closed notice stands in for it. */
+  function applyBanner(data) {
+    const bar = document.querySelector('[data-notice-bar]');
+    if (!bar) return;
+    const closed = txt(data.intake_state).trim() === 'closed';
+    const text = txt(data.banner_text).trim()
+      || (closed ? txt(data.intake_closed_title).trim() : '');
+    if (!text) { bar.hidden = true; return; }
+    bar.querySelector('[data-notice-text]').textContent = text;
+    const link = bar.querySelector('[data-notice-link]');
+    const label = txt(data.banner_link_label).trim();
+    const url = txt(data.banner_link_url).trim();
+    if (link) {
+      link.hidden = !(label && url);
+      if (label && url) { link.textContent = label; link.setAttribute('href', url); }
+    }
+    bar.hidden = false;
+  }
+
+  /* While intake is closed the form never opens; a notice takes its place. */
+  function applyIntake(data) {
+    if (txt(data.intake_state).trim() !== 'closed') return;
+    const shell = document.querySelector('.inquiry-shell');
+    if (!shell) return;
+    const title = txt(data.intake_closed_title).trim() || '지금은 신청을 받지 않습니다';
+    const copy = txt(data.intake_closed_copy).trim();
+    const box = document.createElement('div');
+    box.className = 'intake-closed';
+    box.innerHTML = '<h3 class="intake-closed__title">' + esc(title) + '</h3>'
+      + (copy ? '<p class="intake-closed__copy">' + multiline(copy) + '</p>' : '');
+    shell.replaceWith(box);
+  }
+
   /* The hash target is rebuilt after load, so the jump is repeated here. */
   function focusHash() {
     const id = decodeURIComponent((location.hash || '').slice(1));
@@ -536,6 +569,8 @@
         inquiry_forms: forms, faq_items: faq, shop_items: shop
       });
       renderCalendars(data, events);
+      applyBanner(data);
+      applyIntake(data);
       if (txt(data.inquiry_send_on).trim() === 'off') {
         document.querySelectorAll('[data-inquiry-send]').forEach((box) => box.remove());
       }
