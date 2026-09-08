@@ -10,6 +10,13 @@ const db = (SUPABASE_READY && window.supabase && window.supabase.createClient)
   : null;
 
 const CONTENT_ROW_ID = 1;
+
+/* Last failure from a write, so callers can tell the user what went wrong. */
+let LAST_DB_ERROR = null;
+
+function lastDbError() {
+  return LAST_DB_ERROR;
+}
 const IMAGE_BUCKET = 'site-images';
 
 async function fetchContent() {
@@ -35,6 +42,7 @@ async function fetchAll(table, options) {
     return data || [];
   } catch (err) {
     console.warn('fetchAll ' + table, err);
+    LAST_DB_ERROR = err;
     return null;
   }
 }
@@ -42,21 +50,21 @@ async function fetchAll(table, options) {
 async function insertRow(table, row) {
   if (!db) return false;
   const { error } = await db.from(table).insert(row);
-  if (error) { console.warn('insertRow ' + table, error); return false; }
+  if (error) { console.warn('insertRow ' + table, error); LAST_DB_ERROR = error; return false; }
   return true;
 }
 
 async function updateRow(table, id, updates) {
   if (!db) return false;
   const { error } = await db.from(table).update(updates).eq('id', id);
-  if (error) { console.warn('updateRow ' + table, error); return false; }
+  if (error) { console.warn('updateRow ' + table, error); LAST_DB_ERROR = error; return false; }
   return true;
 }
 
 async function deleteRow(table, id) {
   if (!db) return false;
   const { error } = await db.from(table).delete().eq('id', id);
-  if (error) { console.warn('deleteRow ' + table, error); return false; }
+  if (error) { console.warn('deleteRow ' + table, error); LAST_DB_ERROR = error; return false; }
   return true;
 }
 
@@ -64,7 +72,7 @@ async function saveContent(data) {
   if (!db) return false;
   const { error } = await db.from('site_content')
     .upsert({ id: CONTENT_ROW_ID, data: data, updated_at: new Date().toISOString() });
-  if (error) { console.warn('saveContent', error); return false; }
+  if (error) { console.warn('saveContent', error); LAST_DB_ERROR = error; return false; }
   return true;
 }
 
