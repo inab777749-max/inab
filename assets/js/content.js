@@ -215,6 +215,29 @@
       + '</div></article>';
   }
 
+  function noticePost(row, index) {
+    const shots = gallery(row);
+    const pinned = row.pinned === true || row.pinned === 'true';
+    const title = esc(txt(row.title));
+    const date = txt(row.date_label).trim();
+    const url = txt(row.link_url).trim();
+    const media = shots.map((src, i) => '<button class="notice-shot" type="button" data-lightbox'
+      + ' data-image="' + esc(src) + '" data-images="' + esc(shots.join('|')) + '" data-title="' + title
+      + '" data-description="" aria-label="' + title + ' 사진 ' + (i + 1) + ' 크게 보기">'
+      + '<img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></button>').join('');
+    return '<details class="notice-post' + (pinned ? ' is-pinned' : '') + '"' + (index === 0 ? ' open' : '') + '>'
+      + '<summary><span class="notice-post__head">'
+      + (pinned ? '<span class="notice-post__pin">중요</span>' : '')
+      + '<span class="notice-post__title">' + title + '</span></span>'
+      + (date ? '<span class="notice-post__date">' + esc(date) + '</span>' : '') + '</summary>'
+      + '<div class="notice-post__body">'
+      + '<div class="notice-post__copy">' + multiline(txt(row.body)) + '</div>'
+      + (media ? '<div class="notice-post__shots">' + media + '</div>' : '')
+      + (url ? '<a class="text-link" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">'
+        + esc(txt(row.link_label).trim() || '자세히 보기') + '</a>' : '')
+      + '</div></details>';
+  }
+
   function inquiryField(spec, index, prefix) {
     const parts = String(spec).split('|').map((p) => p.trim());
     const label = parts[0] || '';
@@ -437,6 +460,21 @@
       if (!sets.inquiry_forms.length) hideEmptySection('[data-list="inquiry_forms"]');
     }
 
+    if (sets.notice_posts) {
+      const list = document.querySelector('[data-list="notice_posts"]');
+      if (list) {
+        /* Pinned posts jump to the front; the rest keep the admin order. */
+        const rows = sets.notice_posts.slice().sort((a, b) => {
+          const pa = (a.pinned === true || a.pinned === 'true') ? 0 : 1;
+          const pb = (b.pinned === true || b.pinned === 'true') ? 0 : 1;
+          return pa - pb;
+        });
+        list.innerHTML = rows.length
+          ? rows.map(noticePost).join('')
+          : '<p class="notice-empty">' + esc(txt(data.notice_empty).trim() || '등록된 공지가 없습니다.') + '</p>';
+      }
+    }
+
     if (sets.faq_items) {
       const list = document.querySelector('[data-list="faq_items"]');
       if (list) {
@@ -544,7 +582,7 @@
   async function load() {
     if (typeof fetchContent !== 'function' || !db) { markReady(); return; }
     try {
-      const [content, portfolio, collab, packages, options, steps, notices, forms, faq, events, shop] =
+      const [content, portfolio, collab, packages, options, steps, notices, forms, faq, posts, events, shop] =
         await Promise.all([
           fetchContent(),
           fetchAll('portfolio_items', { order: 'sort_order' }),
@@ -555,6 +593,7 @@
           fetchAll('commission_notices', { order: 'sort_order' }),
           fetchAll('inquiry_forms', { order: 'sort_order' }),
           fetchAll('faq_items', { order: 'sort_order' }),
+          fetchAll('notice_posts', { order: 'sort_order' }),
           fetchAll('schedule_events', { order: 'event_date' }),
           fetchAll('shop_items', { order: 'sort_order' })
         ]);
@@ -566,7 +605,7 @@
       renderLists(data, {
         portfolio_items: portfolio, collab_artists: collab, price_packages: packages,
         price_options: options, commission_steps: steps, commission_notices: notices,
-        inquiry_forms: forms, faq_items: faq, shop_items: shop
+        inquiry_forms: forms, faq_items: faq, notice_posts: posts, shop_items: shop
       });
       renderCalendars(data, events);
       applyBanner(data);

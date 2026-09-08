@@ -376,6 +376,7 @@
   }
 
   const colFilter = {};
+  let activeTab = null;
   const collapsed = new Set();
   let uidSeed = 0;
   let dragFrom = null;
@@ -667,8 +668,9 @@
       { id: 'inbox', label: '📮 문의함', cards: [], custom: 'inbox' }
     ]);
 
-    tabs.innerHTML = all.map((tab, index) =>
-      '<button class="tab-btn' + (index === 0 ? ' is-active' : '') + '" type="button" data-tab="' + tab.id + '">'
+    if (!all.some((tab) => tab.id === activeTab)) activeTab = all[0].id;
+    tabs.innerHTML = all.map((tab) =>
+      '<button class="tab-btn' + (tab.id === activeTab ? ' is-active' : '') + '" type="button" data-tab="' + tab.id + '">'
       + esc(tab.label) + '</button>').join('');
 
     panels.innerHTML = all.map((tab, index) => {
@@ -685,7 +687,7 @@
       const page = S.PAGES.find((p) => p.slug === tab.id);
       const link = page ? '<div class="note">이 탭의 값은 <b>' + esc(page.label)
         + '</b> 화면에 나옵니다. <a href="../' + page.file + '" target="_blank" rel="noopener">새 창에서 열어 확인하기</a></div>' : '';
-      return '<div class="tab-panel' + (index === 0 ? ' is-active' : '') + '" id="panel-' + tab.id + '">'
+      return '<div class="tab-panel' + (tab.id === activeTab ? ' is-active' : '') + '" id="panel-' + tab.id + '">'
         + inner + link + '</div>';
     }).join('');
 
@@ -846,6 +848,7 @@
 
     const tab = target.closest('[data-tab]');
     if (tab) {
+      activeTab = tab.dataset.tab;
       document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('is-active', b === tab));
       document.querySelectorAll('.tab-panel').forEach((p) => p.classList.toggle('is-active', p.id === 'panel-' + tab.dataset.tab));
       window.scrollTo({ top: 0, behavior: 'smooth' });

@@ -29,7 +29,33 @@
     });
   }
 
-  function closeNav() { setNavState(false); }
+  function closeNav() {
+    setNavState(false);
+    document.querySelectorAll(".site-nav__item.is-open").forEach((item) => {
+      item.classList.remove("is-open");
+      const button = item.querySelector("[data-subnav-toggle]");
+      if (button) button.setAttribute("aria-expanded", "false");
+    });
+  }
+
+  /* The submenu folds on phones, so it needs a button of its own. */
+  function addSubnavToggles() {
+    document.querySelectorAll(".site-nav__item").forEach((item) => {
+      if (!item.querySelector(".subnav") || item.querySelector("[data-subnav-toggle]")) return;
+      const link = item.querySelector(".site-nav__link");
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "subnav-toggle";
+      button.setAttribute("data-subnav-toggle", "");
+      button.setAttribute("aria-expanded", "false");
+      button.setAttribute("aria-label", (link ? link.textContent.trim() : "") + " 하위 목록 열기");
+      button.textContent = "⌄";
+      item.appendChild(button);
+    });
+  }
+
+  addSubnavToggles();
+  document.addEventListener("content:ready", addSubnavToggles);
 
   window.addEventListener("resize", closeNav);
   document.addEventListener("content:ready", closeNav);
@@ -43,6 +69,14 @@
     if (target.closest("[data-nav-toggle]")) {
       const toggle = navToggle();
       setNavState(toggle.getAttribute("aria-expanded") !== "true");
+      return;
+    }
+
+    const subToggle = target.closest("[data-subnav-toggle]");
+    if (subToggle) {
+      const item = subToggle.closest(".site-nav__item");
+      const open = item.classList.toggle("is-open");
+      subToggle.setAttribute("aria-expanded", String(open));
       return;
     }
 

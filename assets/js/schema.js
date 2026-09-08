@@ -9,6 +9,7 @@ const PAGES = [
   { slug: 'commission', file: 'commission.html', label: '커미션 안내' },
   { slug: 'pricing', file: 'pricing.html', label: '가격 안내' },
   { slug: 'schedule', file: 'schedule.html', label: '작업 일정' },
+  { slug: 'notice', file: 'notice.html', label: '공지사항' },
   { slug: 'shop', file: 'shop.html', label: '개인작 판매' },
   { slug: 'faq', file: 'faq.html', label: '자주묻는질문 FAQ' }
 ];
@@ -125,6 +126,21 @@ const COLLECTIONS = {
       { key: 'calendar', label: '달력', type: 'select', width: 'half', options: [['package', '패키지 작업'], ['nilo', '닐로툰 & 뚜따']], help: '어느 탭의 달력에 표시할지' },
       { key: 'kind', label: '종류', type: 'select', width: 'half', options: [['holiday', '휴일'], ['closed', '마감'], ['waiting', '대기'], ['working', '진행'], ['done', '완료']], help: '색이 달라집니다. 범례와 같은 순서' },
       { key: 'label', label: '표시 문구', type: 'text', width: 'half', help: '칸에 들어갈 짧은 글. 예: 대기 1건 / 정기 휴일' }
+    ]
+  },
+  notice_posts: {
+    label: '공지 글',
+    where: '공지사항 페이지 (중요 표시한 글이 항상 맨 위)',
+    order: 'sort_order',
+    fields: [
+      { key: 'title', label: '제목', type: 'text', help: '목록에 보이는 줄' },
+      { key: 'pinned', label: '중요 (맨 위 고정)', type: 'checkbox', width: 'half', help: '체크하면 목록 맨 위로 올라가고 「중요」 표시가 붙습니다' },
+      { key: 'date_label', label: '날짜', type: 'text', width: 'half', help: '예: 2026.08.14. 비우면 날짜가 안 보입니다' },
+      { key: 'body', label: '내용', type: 'textarea', rows: 8, help: '줄바꿈 그대로 반영. 빈 줄로 문단을 나눌 수 있습니다' },
+      { key: 'images', label: '사진', type: 'gallery', help: '여러 장 넣을 수 있습니다. 글 안에 나오고, 누르면 크게 볼 수 있습니다', spec: '가로 사진 권장 · 비율은 원본 그대로 유지됩니다 · GIF 도 됩니다', ratio: '4 / 3' },
+      { key: 'link_url', label: '링크 주소', type: 'text', width: 'half', help: '글 아래에 링크 하나. 비우면 없음' },
+      { key: 'link_label', label: '링크 문구', type: 'text', width: 'half', help: '비우면 "자세히 보기"' },
+      { key: 'sort_order', label: '순서', type: 'number', hidden: true, help: '목록 순서대로 자동으로 매겨집니다' }
     ]
   },
   shop_items: {
@@ -409,6 +425,21 @@ const CONTENT_TABS = [
       }
     ],
     collections: ['schedule_events']
+  },
+  {
+    id: 'notice', label: '📢 공지사항',
+    cards: [
+      {
+        title: '페이지 머리글', where: '공지사항 페이지 상단',
+        fields: [
+          { key: 'notice_kicker2', label: '윗줄 라벨', type: 'text', width: 'half', help: '제목 위 작은 영문' },
+          { key: 'notice_title2', label: '큰 제목', type: 'text', width: 'half', help: '큰 글자. 영문 권장' },
+          { key: 'notice_lead2', label: '설명', type: 'textarea', help: '제목 아래 한두 줄' },
+          { key: 'notice_empty', label: '글이 없을 때 문구', type: 'text', help: '공지 글을 하나도 안 올렸을 때 대신 보이는 줄' }
+        ]
+      }
+    ],
+    collections: ['notice_posts']
   },
   {
     id: 'shop', label: '🛍 개인작 판매',

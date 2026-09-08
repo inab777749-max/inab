@@ -11,7 +11,41 @@ ALTER TABLE shop_items      ADD COLUMN IF NOT EXISTS images TEXT;
 UPDATE portfolio_items SET images = image_url WHERE (images IS NULL OR images = '') AND image_url <> '';
 UPDATE shop_items      SET images = image_url WHERE (images IS NULL OR images = '') AND image_url <> '';
 
--- 3) 사진 업로드 저장소 (관리자의 "사진 올리기" 버튼)
+-- 3) 공지 게시판
+CREATE TABLE IF NOT EXISTS notice_posts (
+  id          BIGSERIAL PRIMARY KEY,
+  title       TEXT,
+  body        TEXT,
+  images      TEXT,
+  date_label  TEXT,
+  link_url    TEXT,
+  link_label  TEXT,
+  pinned      BOOLEAN DEFAULT FALSE,
+  sort_order  INTEGER DEFAULT 0,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE notice_posts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "notice_posts_read"   ON notice_posts;
+DROP POLICY IF EXISTS "notice_posts_insert" ON notice_posts;
+DROP POLICY IF EXISTS "notice_posts_update" ON notice_posts;
+DROP POLICY IF EXISTS "notice_posts_delete" ON notice_posts;
+CREATE POLICY "notice_posts_read"   ON notice_posts FOR SELECT USING (true);
+CREATE POLICY "notice_posts_insert" ON notice_posts FOR INSERT TO authenticated WITH CHECK (true);
+CREATE POLICY "notice_posts_update" ON notice_posts FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "notice_posts_delete" ON notice_posts FOR DELETE TO authenticated USING (true);
+
+-- 4) 공지 메뉴 이름과 페이지 문구
+UPDATE site_content SET data = data || '{
+  "nav_notice": "공지사항",
+  "notice_kicker2": "Notice",
+  "notice_title2": "공지사항",
+  "notice_lead2": "휴가 일정, 접수 안내, 문의 작성법을 이곳에 정리합니다.",
+  "notice_empty": "등록된 공지가 없습니다.",
+  "seo_notice_title": "공지사항 | INAB Shop",
+  "seo_notice_desc": "INAB 공지사항 — 휴가 일정, 접수 안내, 문의 작성법."
+}'::jsonb WHERE id = 1;
+
+-- 5) 사진 업로드 저장소 (관리자의 "사진 올리기" 버튼)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('site-images', 'site-images', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
@@ -25,7 +59,7 @@ CREATE POLICY "site_images_insert" ON storage.objects FOR INSERT TO authenticate
 CREATE POLICY "site_images_update" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'site-images') WITH CHECK (bucket_id = 'site-images');
 CREATE POLICY "site_images_delete" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'site-images');
 
--- 4) 탭 제목을 INAB Shop 으로
+-- 6) 탭 제목을 INAB Shop 으로
 UPDATE site_content
 SET data = data || '{
   "site_name": "INAB Shop",

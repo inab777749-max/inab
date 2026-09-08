@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" data-c-content="seo_notice_desc" content="INAB 공지사항 — 휴가 일정, 접수 안내, 문의 작성법.">
+  <meta name="theme-color" content="#eee8f7">
+  <title data-c="seo_notice_title">공지사항 | INAB Shop</title>
+  <link rel="icon" href="assets/images/favicon.svg" data-c-href="img_favicon">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="INAB Shop">
+  <meta property="og:title" data-c-content="seo_faq_title" content="자주묻는질문 FAQ | INAB Shop">
+  <meta property="og:description" data-c-content="seo_notice_desc" content="INAB 공지사항 — 휴가 일정, 접수 안내, 문의 작성법.">
+  <meta property="og:image" data-c-content="seo_image" content="assets/images/hero.webp">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="stylesheet" href="assets/css/styles.css">
+  <script>document.documentElement.classList.add('js');setTimeout(function(){document.body&&document.body.classList.add('ready');},1200);</script>
+</head>
+<body class="">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <div class="notice-bar" data-notice-bar hidden>
+    <span data-notice-text></span>
+    <a data-notice-link hidden></a>
+  </div>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="index.html" aria-label="INAB 홈">
+        <span data-c="site_brand">INAB</span><span class="brand__mark" aria-hidden="true"></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-controls="site-navigation" aria-expanded="false" aria-label="메뉴 열기" data-nav-toggle>
+        <span class="nav-toggle__icon" aria-hidden="true"></span>
+      </button>
+      <nav class="site-nav" id="site-navigation" aria-label="주요 메뉴" data-site-nav>
+        <ul class="site-nav__list"><li class="site-nav__item"><a class="site-nav__link" href="notice.html" data-c="nav_notice" aria-current="page">공지사항</a></li><li class="site-nav__item"><a class="site-nav__link" href="profile.html" data-c="nav_profile">작가 프로필</a></li><li class="site-nav__item"><a class="site-nav__link site-nav__link--has-menu" href="portfolio.html" data-c="nav_portfolio">포트폴리오</a><ul class="subnav" data-subnav aria-label="포트폴리오 분야"><li><a href="portfolio.html#sculpt">일러기반 성형</a></li><li><a href="portfolio.html#facial">페이셜</a></li><li><a href="portfolio.html#original-facial">오리지널 모델 페이셜</a></li><li><a href="portfolio.html#poying">뽀잉눈 / 웃는눈</a></li><li><a href="portfolio.html#meligo">멜리고 닐로툰</a></li><li><a href="portfolio.html#warudo">와루도 닐로툰</a></li><li><a href="portfolio.html#hair">헤어조합</a></li><li><a href="portfolio.html#magica">마지카 클로즈2</a></li><li><a href="portfolio.html#gradient">헤어 브릿지 · 그라데이션</a></li></ul></li><li class="site-nav__item"><a class="site-nav__link" href="commission.html" data-c="nav_commission">커미션 안내</a></li><li class="site-nav__item"><a class="site-nav__link" href="pricing.html" data-c="nav_pricing">가격 안내</a></li><li class="site-nav__item"><a class="site-nav__link" href="schedule.html" data-c="nav_schedule">작업 일정</a></li><li class="site-nav__item"><a class="site-nav__link" href="shop.html" data-c="nav_shop">개인작 판매</a></li><li class="site-nav__item"><a class="site-nav__link" href="faq.html" data-c="nav_faq">자주묻는질문 FAQ</a></li></ul>
+      </nav>
+    </div>
+  </header>
+  <main id="main">
+<section class="page-hero">
+  <div class="container page-hero__inner">
+    <div class="page-hero__copy">
+      <ol class="crumbs" aria-label="현재 위치"><li><a href="index.html">Home</a></li><li aria-current="page" data-c="nav_notice">공지사항</li></ol>
+      <p class="eyebrow" data-c="notice_kicker2">Notice</p>
+      <h1 class="page-hero__title" data-c="notice_title2">공지사항</h1>
+      <p class="page-hero__lead" data-c-multi="notice_lead2">휴가 일정, 접수 안내, 문의 작성법을 이곳에 정리합니다.</p>
+    </div>
+  </div>
+  <img class="page-hero__butterfly" src="assets/images/butterfly-hero.webp" alt="" data-c-src="img_butterfly_hero">
+</section>
+<section class="section">
+  <div class="container">
+    <div class="notice-list" data-list="notice_posts">
+      <p class="notice-empty" data-c="notice_empty">등록된 공지가 없습니다.</p>
+    </div>
+  </div>
+</section>
+<dialog class="modal" aria-labelledby="portfolio-dialog-title" data-lightbox-modal>
+  <button class="modal__close" type="button" aria-label="확대 이미지 닫기" data-modal-close>×</button>
+  <div class="modal__stage">
+    <button class="modal__step modal__step--prev" type="button" data-modal-step="-1" aria-label="이전 사진" hidden>‹</button>
+    <img class="modal__image" alt="" data-modal-image hidden>
+    <button class="modal__step modal__step--next" type="button" data-modal-step="1" aria-label="다음 사진" hidden>›</button>
+    <span class="modal__count" data-modal-count hidden></span>
+  </div>
+  <div class="modal__body">
+    <h2 class="modal__title" id="portfolio-dialog-title" data-modal-title>공지</h2>
+    <p class="modal__copy" data-modal-copy></p>
+  </div>
+</dialog>
+</main>
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <div>
+        <a class="site-footer__brand" href="index.html" data-c="site_brand">INAB</a>
+        <p class="site-footer__copy" data-c-year="footer_copy">© 2026 INAB. Virtual Character Production Artist.</p>
+      </div>
+      <nav class="site-footer__links" aria-label="하단 메뉴">
+        <a href="commission.html#inquiry" data-c="footer_l1_label" data-c-href="footer_l1_url">커미션 문의서</a>
+        <a href="pricing.html" data-c="footer_l2_label" data-c-href="footer_l2_url">가격 안내</a>
+        <a href="faq.html" data-c="footer_l3_label" data-c-href="footer_l3_url">FAQ</a>
+      </nav>
+    </div>
+  </footer>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/schema.js"></script>
+  <script src="assets/js/supabase.js"></script>
+  <script src="assets/js/content.js"></script>
+  <script src="assets/js/site.js"></script>
+</body>
+</html>
