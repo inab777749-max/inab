@@ -74,3 +74,6 @@ SET data = data || '{
 }'::jsonb,
 updated_at = NOW()
 WHERE id = 1;
+
+-- 7) 새로 만든 표를 접속 정보에 알린다 (이걸 안 하면 "표가 없다"는 오류가 잠시 난다)
+SELECT pg_notify('pgrst', 'reload schema');

@@ -1284,13 +1284,31 @@
       if (broken.length) {
         const labels = broken.map((n) => S.COLLECTIONS[n].label).join(', ');
         const err = typeof lastDbError === 'function' ? lastDbError() : null;
-        const missing = err && /does not exist|42P01|schema cache/i.test(err.message || '');
+        const message = (err && (err.message || err.hint)) || '';
+        const code = (err && err.code) || '';
+        let advice;
+        if (/schema cache|PGRST205/i.test(message + code)) {
+          /* The table exists but PostgREST has not picked it up yet. */
+          advice = '표는 있지만 Supabase 접속 정보가 아직 갱신되지 않았습니다.\n\n'
+            + 'Supabase → SQL Editor 에서 아래 한 줄을 실행한 뒤 다시 저장해 주세요.\n\n'
+            + "    SELECT pg_notify('pgrst', 'reload schema');\n\n"
+            + '그래도 같은 창이 뜨면 Settings → General → Restart project 를 누르고 1~2분 뒤 다시 시도해 주세요.';
+        } else if (/does not exist|42P01/i.test(message + code)) {
+          advice = '표가 아직 만들어지지 않았습니다.\n'
+            + 'Supabase → SQL Editor 에서 supabase-update.sql 을 한 번 실행한 뒤 다시 저장해 주세요.';
+        } else if (/42501|row-level security|policy/i.test(message + code)) {
+          advice = '쓰기 권한이 없습니다.\n'
+            + 'supabase-update.sql 을 다시 실행하거나, 로그아웃 후 다시 로그인해 주세요.';
+        } else if (/column .* does not exist|PGRST204/i.test(message + code)) {
+          advice = '표에 없는 칸이 있습니다.\n'
+            + 'supabase-update.sql 을 한 번 더 실행한 뒤 다시 저장해 주세요.';
+        } else {
+          advice = '잠시 뒤 다시 시도해 주세요.';
+        }
         stateBox.textContent = labels + ' 을(를) 저장하지 못했습니다';
         stateBox.classList.add('is-dirty');
-        window.alert('“' + labels + '” 을(를) 저장하지 못했습니다.\n\n'
-          + (missing
-            ? '표가 아직 만들어지지 않았습니다.\nSupabase → SQL Editor 에서 supabase-update.sql 을 한 번 실행한 뒤 다시 저장해 주세요.'
-            : '오류 내용: ' + ((err && err.message) || '알 수 없음')));
+        window.alert('“' + labels + '” 을(를) 저장하지 못했습니다.\n\n' + advice
+          + '\n\n─────────\n오류 내용: ' + (message || '알 수 없음') + (code ? '  (' + code + ')' : ''));
         return;
       }
       markClean('저장했습니다');

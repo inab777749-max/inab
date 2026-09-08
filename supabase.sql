@@ -500,3 +500,6 @@ SELECT * FROM (VALUES
   ('nilo', '2026-08-30'::date, 'holiday', '정기 휴일')
 ) AS seed
 WHERE NOT EXISTS (SELECT 1 FROM schedule_events);
+
+-- 새로 만든 표를 접속 정보에 알린다
+SELECT pg_notify('pgrst', 'reload schema');
