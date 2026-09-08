@@ -379,6 +379,7 @@
   }
 
   const colFilter = {};
+  const LEGACY_IMAGE_TABLES = ['portfolio_items', 'shop_items'];
   let activeTab = null;
   const collapsed = new Set();
   let uidSeed = 0;
@@ -1262,7 +1263,7 @@
         const rows = sets[name] || [];
         for (const row of rows) {
           const payload = {};
-          if ('images' in row) {
+          if (LEGACY_IMAGE_TABLES.indexOf(name) >= 0 && 'images' in row) {
             const first = String(row.images || '').split('\n').map((v) => v.trim()).filter(Boolean)[0] || '';
             payload.image_url = first;
           }
@@ -1287,7 +1288,11 @@
         const message = (err && (err.message || err.hint)) || '';
         const code = (err && err.code) || '';
         let advice;
-        if (/schema cache|PGRST205/i.test(message + code)) {
+        if (/column|PGRST204/i.test(message + code)) {
+          advice = '표에 없는 칸을 저장하려 했습니다.\n'
+            + 'supabase-update.sql 을 한 번 더 실행한 뒤 다시 저장해 주세요.\n'
+            + '그래도 같으면 아래 오류 내용을 그대로 알려주세요.';
+        } else if (/schema cache|PGRST205/i.test(message + code)) {
           /* The table exists but PostgREST has not picked it up yet. */
           advice = '표는 있지만 Supabase 접속 정보가 아직 갱신되지 않았습니다.\n\n'
             + 'Supabase → SQL Editor 에서 아래 한 줄을 실행한 뒤 다시 저장해 주세요.\n\n'
@@ -1299,9 +1304,6 @@
         } else if (/42501|row-level security|policy/i.test(message + code)) {
           advice = '쓰기 권한이 없습니다.\n'
             + 'supabase-update.sql 을 다시 실행하거나, 로그아웃 후 다시 로그인해 주세요.';
-        } else if (/column .* does not exist|PGRST204/i.test(message + code)) {
-          advice = '표에 없는 칸이 있습니다.\n'
-            + 'supabase-update.sql 을 한 번 더 실행한 뒤 다시 저장해 주세요.';
         } else {
           advice = '잠시 뒤 다시 시도해 주세요.';
         }
