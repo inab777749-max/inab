@@ -323,13 +323,60 @@
 
   /* ------------------------------------------------------------ calendar */
   const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일'];
+  const calView = { year: 0, month: 0, events: null };
+
+  /* Visitors can walk through months; the arrows are added once. */
+  function calendarNav() {
+    const head = document.querySelector('.calendar-head');
+    if (!head || head.querySelector('[data-cal-nav]')) return;
+    const nav = document.createElement('div');
+    nav.className = 'calendar-nav';
+    nav.setAttribute('data-cal-nav', '');
+    nav.innerHTML = '<button class="calendar-nav__step" type="button" data-cal-shift="-1" aria-label="이전 달">‹</button>'
+      + '<button class="calendar-nav__now" type="button" data-cal-now>이번 달</button>'
+      + '<button class="calendar-nav__step" type="button" data-cal-shift="1" aria-label="다음 달">›</button>';
+    const title = head.querySelector('[data-calendar-title]');
+    if (title && title.parentElement === head) head.insertBefore(nav, title.nextSibling);
+    else head.appendChild(nav);
+  }
+
+  function shiftMonth(step) {
+    const next = new Date(calView.year, calView.month - 1 + step, 1);
+    calView.year = next.getFullYear();
+    calView.month = next.getMonth() + 1;
+    paintCalendars();
+  }
+
+  document.addEventListener('click', (event) => {
+    const step = event.target.closest && event.target.closest('[data-cal-shift]');
+    if (step) { shiftMonth(Number(step.dataset.calShift)); return; }
+    if (event.target.closest && event.target.closest('[data-cal-now]')) {
+      const now = new Date();
+      calView.year = now.getFullYear();
+      calView.month = now.getMonth() + 1;
+      paintCalendars();
+    }
+  });
 
   function renderCalendars(data, events) {
     const grids = document.querySelectorAll('[data-calendar]');
     if (!grids.length || events == null) return;
     const now = new Date();
-    const year = parseInt(txt(data.schedule_year), 10) || now.getFullYear();
-    const month = parseInt(txt(data.schedule_month), 10) || (now.getMonth() + 1);
+    const fixed = txt(data.schedule_start).trim() === 'fixed';
+    calView.year = (fixed && parseInt(txt(data.schedule_year), 10)) || now.getFullYear();
+    calView.month = (fixed && parseInt(txt(data.schedule_month), 10)) || (now.getMonth() + 1);
+    calView.events = events;
+    calendarNav();
+    paintCalendars();
+  }
+
+  function paintCalendars() {
+    const grids = document.querySelectorAll('[data-calendar]');
+    const events = calView.events;
+    if (!grids.length || events == null) return;
+    const now = new Date();
+    const year = calView.year;
+    const month = calView.month;
     const title = document.querySelector('[data-calendar-title]');
     if (title) title.textContent = year + '년 ' + month + '월';
 
@@ -364,6 +411,14 @@
         cells += '<div class="calendar-day calendar-day--muted" aria-hidden="true"></div>';
       }
       grid.innerHTML = cells;
+    });
+
+    const empty = (events || []).every((row) => {
+      const date = txt(row.event_date).slice(0, 10).split('-');
+      return Number(date[0]) !== year || Number(date[1]) !== month;
+    });
+    document.querySelectorAll('[data-calendar-empty]').forEach((node) => {
+      node.hidden = !empty;
     });
   }
 

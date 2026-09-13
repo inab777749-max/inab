@@ -414,8 +414,9 @@ const CONTENT_TABS = [
       {
         title: '달력', where: '작업 일정 페이지 달력 · 칸 내용은 아래 일정 목록에서',
         fields: [
-          { key: 'schedule_year', label: '표시 연도', type: 'number', width: 'half', help: '예: 2026. 비우면 올해' },
-          { key: 'schedule_month', label: '표시 월', type: 'number', width: 'half', help: '1~12. 비우면 이번 달' },
+          { key: 'schedule_start', label: '처음 보여줄 달', type: 'select', width: 'half', options: [['auto', '이번 달 (자동)'], ['fixed', '아래에 지정한 달']], help: '자동으로 두면 달이 바뀔 때마다 그 달이 저절로 열립니다. 방문자는 화살표로 다른 달도 볼 수 있습니다' },
+          { key: 'schedule_year', label: '지정 연도', type: 'number', width: 'half', help: '위를 “지정한 달”로 뒀을 때만 쓰입니다. 예: 2026' },
+          { key: 'schedule_month', label: '지정 월', type: 'number', width: 'half', help: '위를 “지정한 달”로 뒀을 때만 쓰입니다. 1~12' },
           { key: 'schedule_tab1', label: '1번 탭 이름', type: 'text', width: 'half', help: '일정의 달력 = 패키지 작업' },
           { key: 'schedule_tab2', label: '2번 탭 이름', type: 'text', width: 'half', help: '일정의 달력 = 닐로툰 & 뚜따' },
           { key: 'schedule_upcoming_title', label: '다음달 안내 제목', type: 'text', width: 'half', help: '비우면 그 줄이 통째로 숨겨집니다' },

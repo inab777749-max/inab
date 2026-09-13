@@ -152,7 +152,11 @@
     .cal__day { min-height: 78px; padding: 6px 7px; border: 1px solid var(--line); border-radius: 9px; background: #fff; font-size: 0.72rem; text-align: left; cursor: pointer; overflow: hidden; }
     .cal__day:hover { border-color: var(--violet); }
     .cal__day.is-out { background: var(--pale-2); opacity: 0.5; cursor: default; }
-    .cal__day.is-on { border-color: var(--deep); box-shadow: 0 0 0 2px rgba(101,70,159,.18); }
+    .cal__day.is-on { border-color: var(--deep); background: var(--pale); box-shadow: 0 0 0 2px rgba(101,70,159,.18); }
+    .cal__day { user-select: none; }
+    .cal__count { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: var(--deep); color: #fff; font-size: 0.7rem; }
+    .cal__bulk { display: grid; gap: 8px; margin-bottom: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+    .cal__dates { max-height: 92px; overflow-y: auto; color: var(--muted); font-size: 0.72rem; line-height: 1.7; }
     .cal__num { display: block; margin-bottom: 4px; color: var(--ink); font-weight: 700; }
     .cal__chip { display: block; margin-bottom: 3px; padding: 2px 6px; border-radius: 5px; color: #fff; font-size: 0.68rem; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .chip--holiday { background: #b4485f; }
@@ -530,7 +534,7 @@
   /* -------------------------------------------------- schedule calendar */
   const KINDS = [['holiday', '휴일'], ['closed', '마감'], ['waiting', '대기'], ['working', '진행'], ['done', '완료']];
   const WD = ['월', '화', '수', '목', '금', '토', '일'];
-  const cal = { calendar: 'package', year: 0, month: 0, day: null };
+  const cal = { calendar: 'package', year: 0, month: 0, days: [], anchor: null };
 
   function calDate(year, month, day) {
     return year + '-' + String(month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
@@ -548,8 +552,9 @@
     if (!wrap) return;
     const now = new Date();
     if (!cal.year) {
-      cal.year = parseInt(txt(content.schedule_year), 10) || now.getFullYear();
-      cal.month = parseInt(txt(content.schedule_month), 10) || (now.getMonth() + 1);
+      const fixed = txt(content.schedule_start).trim() === 'fixed';
+      cal.year = (fixed && parseInt(txt(content.schedule_year), 10)) || now.getFullYear();
+      cal.month = (fixed && parseInt(txt(content.schedule_month), 10)) || (now.getMonth() + 1);
     }
     const first = new Date(cal.year, cal.month - 1, 1);
     const offset = (first.getDay() + 6) % 7;
@@ -562,7 +567,7 @@
       const chips = calRows(date).map((item) => '<span class="cal__chip chip--'
         + esc(txt(item.row.kind) || 'waiting') + '">' + esc(txt(item.row.label) || '(문구 없음)')
         + '</span>').join('');
-      cells += '<button class="cal__day' + (cal.day === date ? ' is-on' : '') + '" type="button" data-cal-day="'
+      cells += '<button class="cal__day' + (cal.days.indexOf(date) >= 0 ? ' is-on' : '') + '" type="button" data-cal-day="'
         + date + '"><span class="cal__num">' + day + '</span>' + chips + '</button>';
     }
 
@@ -582,17 +587,37 @@
       + '</div><button class="btn btn--sm" type="button" data-cal-today>이번 달</button></div>'
       + '<div class="cal__grid">' + cells + '</div>'
       + '<div class="cal__legend">' + legend + '</div>'
+      + '<p class="cal__hint" style="margin-top:10px">날짜를 여러 개 고르려면 <b>Shift</b> 를 누른 채 끝 날짜를 누르거나,'
+      + ' <b>Ctrl</b>(맥은 <b>⌘</b>) 을 누른 채 하나씩 누르세요.</p>'
       + '</div>' + calSide() + '</div>';
   }
 
   function calSide() {
-    if (!cal.day) {
+    if (!cal.days.length) {
       return '<div class="cal__side"><h4>날짜를 고르세요</h4>'
         + '<p class="cal__hint">달력에서 날짜를 누르면 그 날의 일정을 여기서 넣고 고칠 수 있습니다.'
         + ' 하루에 여러 건도 됩니다.</p>'
-        + '<p class="cal__hint">달력에 보이는 달은 🗓 위쪽 “표시 연도·월”에서 정합니다.</p></div>';
+        + '<p class="cal__hint">Shift 나 Ctrl 을 누른 채 누르면 여러 날짜를 한 번에 고를 수 있습니다.</p></div>';
     }
-    const rows = calRows(cal.day);
+
+    /* Several days at once: one bulk action instead of repeating the same entry. */
+    if (cal.days.length > 1) {
+      const sorted = cal.days.slice().sort();
+      const options = KINDS.map((k) => '<option value="' + k[0] + '">' + k[1] + '</option>').join('');
+      const total = sorted.reduce((sum, date) => sum + calRows(date).length, 0);
+      return '<div class="cal__side"><h4>선택한 날짜<span class="cal__count">' + sorted.length + '개</span></h4>'
+        + '<p class="cal__dates">' + sorted.map((d) => d.replace(/-/g, '.')).join(' · ') + '</p>'
+        + '<div class="cal__bulk">'
+        + '<select data-bulk-kind>' + options + '</select>'
+        + '<input type="text" data-bulk-label placeholder="칸에 보일 문구 (예: 정기 휴일)">'
+        + '<button class="btn btn--sm btn--primary" type="button" data-cal-bulk-add>＋ 고른 날짜에 한꺼번에 넣기</button>'
+        + '</div>'
+        + '<button class="btn btn--sm" type="button" data-cal-bulk-clear>고른 날짜의 일정 모두 지우기 ('
+        + total + '건)</button>'
+        + '<p class="cal__hint" style="margin-top:10px">빈 곳을 누르면 선택이 풀립니다.</p></div>';
+    }
+
+    const rows = calRows(cal.days[0]);
     const body = rows.length ? rows.map((item) => {
       const prefix = 'cal_' + item.index + '_';
       const options = KINDS.map((k) => '<option value="' + k[0] + '"'
@@ -604,7 +629,7 @@
         + '<button class="btn btn--danger" type="button" data-cal-del="' + item.index + '" aria-label="삭제">✕</button>'
         + '</div>';
     }).join('') : '<p class="cal__hint">이 날은 비어 있습니다.</p>';
-    return '<div class="cal__side"><h4>' + cal.day.replace(/-/g, '. ') + '</h4>'
+    return '<div class="cal__side"><h4>' + cal.days[0].replace(/-/g, '. ') + '</h4>'
       + '<p class="cal__hint">종류에 따라 달력 칸의 색이 달라집니다.</p>'
       + body
       + '<button class="btn btn--sm btn--primary" type="button" data-cal-add>＋ 이 날에 항목 추가</button></div>';
@@ -928,14 +953,15 @@
     }
 
     const calTab = target.closest('[data-cal-tab]');
-    if (calTab) { cal.calendar = calTab.dataset.calTab; cal.day = null; renderCalendar(); return; }
+    if (calTab) { cal.calendar = calTab.dataset.calTab; cal.days = []; cal.anchor = null; renderCalendar(); return; }
 
     const calMove = target.closest('[data-cal-move]');
     if (calMove) {
       const next = new Date(cal.year, cal.month - 1 + Number(calMove.dataset.calMove), 1);
       cal.year = next.getFullYear();
       cal.month = next.getMonth() + 1;
-      cal.day = null;
+      cal.days = [];
+      cal.anchor = null;
       renderCalendar();
       return;
     }
@@ -944,21 +970,74 @@
       const now = new Date();
       cal.year = now.getFullYear();
       cal.month = now.getMonth() + 1;
-      cal.day = null;
+      cal.days = [];
+      cal.anchor = null;
       renderCalendar();
       return;
     }
 
     const calDay = target.closest('[data-cal-day]');
-    if (calDay) { cal.day = calDay.dataset.calDay; renderCalendar(); return; }
+    if (calDay) {
+      const date = calDay.dataset.calDay;
+      if (event.shiftKey && cal.anchor) {
+        const from = cal.anchor < date ? cal.anchor : date;
+        const to = cal.anchor < date ? date : cal.anchor;
+        cal.days = [];
+        document.querySelectorAll('[data-cal-day]').forEach((node) => {
+          const value = node.dataset.calDay;
+          if (value >= from && value <= to) cal.days.push(value);
+        });
+      } else if (event.ctrlKey || event.metaKey) {
+        const at = cal.days.indexOf(date);
+        if (at >= 0) cal.days.splice(at, 1); else cal.days.push(date);
+        cal.anchor = date;
+      } else {
+        cal.days = [date];
+        cal.anchor = date;
+      }
+      renderCalendar();
+      return;
+    }
 
     if (target.closest('[data-cal-add]')) {
-      if (!cal.day) return;
+      if (cal.days.length !== 1) return;
       (sets.schedule_events = sets.schedule_events || []).push({
-        calendar: cal.calendar, event_date: cal.day, kind: 'waiting', label: ''
+        calendar: cal.calendar, event_date: cal.days[0], kind: 'waiting', label: ''
       });
       renderCalendar();
       markDirty();
+      return;
+    }
+
+    if (target.closest('[data-cal-bulk-add]')) {
+      const side = target.closest('.cal__side');
+      const kind = side.querySelector('[data-bulk-kind]').value;
+      const label = side.querySelector('[data-bulk-label]').value.trim();
+      const rows = (sets.schedule_events = sets.schedule_events || []);
+      cal.days.forEach((date) => {
+        rows.push({ calendar: cal.calendar, event_date: date, kind: kind, label: label });
+      });
+      renderCalendar();
+      markDirty();
+      toast(cal.days.length + '개 날짜에 넣었습니다.');
+      return;
+    }
+
+    if (target.closest('[data-cal-bulk-clear]')) {
+      const targets = (sets.schedule_events || []).filter((row) =>
+        txt(row.calendar) === cal.calendar && cal.days.indexOf(txt(row.event_date).slice(0, 10)) >= 0);
+      if (!targets.length) { toast('고른 날짜에 일정이 없습니다.'); return; }
+      if (!window.confirm('고른 날짜의 일정 ' + targets.length + '건을 지울까요?')) return;
+      for (const row of targets) {
+        if (row.id) {
+          const done = await deleteRow('schedule_events', row.id);
+          if (!done) { toast('삭제하지 못했습니다.'); return; }
+        }
+      }
+      sets.schedule_events = (sets.schedule_events || []).filter((row) => targets.indexOf(row) < 0);
+      renderCalendar();
+      markDirty();
+      toast(targets.length + '건을 지웠습니다.');
       return;
     }
 
