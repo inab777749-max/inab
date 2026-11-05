@@ -3,6 +3,25 @@
   "use strict";
 
   const S = window.SITE_SCHEMA;
+  // Keep the existing flat Social destination keys; icons share the same
+  // image input, original-file upload and media-library saving path.
+  const SOCIAL_ICON_FIELDS = [
+    { id: 'artmug', label: '아트머그' },
+    { id: 'x', label: 'X / Twitter' },
+    { id: 'discord', label: 'Discord' }
+  ];
+  S.CONTENT_TABS.forEach((tab) => tab.cards.forEach((card) => {
+    SOCIAL_ICON_FIELDS.forEach((social) => {
+      const urlKey = 'social_' + social.id + '_url';
+      const iconKey = 'social_' + social.id + '_icon_url';
+      const index = card.fields.findIndex((field) => field.key === urlKey);
+      if(index !== -1 && !card.fields.some((field) => field.key === iconKey)) {
+        card.fields.splice(index + 1, 0, { key: iconKey, label: social.label + ' 아이콘 이미지', type: 'image',
+          help: '메인 하단 Social의 글자 아이콘 대신 표시합니다. 비우면 기존 글자 아이콘을 사용합니다.',
+          spec: '정사각형 PNG · WEBP · GIF 권장 · 원본 비율을 유지해 표시합니다', ratio: '1 / 1', clearLabel: '기본 글자로' });
+      }
+    });
+  }));
   const gate = document.getElementById('inabGate');
   const shell = document.getElementById('inabShell');
   const errorBox = document.getElementById('inabError');
@@ -372,7 +391,7 @@
         + '<button class="btn btn--sm btn--primary" type="button" data-media-open="' + id + '">보관함에서 선택</button>'
         + '<label class="btn btn--sm" for="up_' + id + '">새 파일 올리기</label>'
         + '<input type="file" id="up_' + id + '" accept="image/*" data-upload-for="' + id + '" hidden>'
-        + (fallback ? '<button class="btn btn--sm" type="button" data-clear-for="' + id + '">기본 사진으로</button>' : '')
+        + (fallback || field.clearLabel ? '<button class="btn btn--sm" type="button" data-clear-for="' + id + '">' + esc(field.clearLabel || '기본 사진으로') + '</button>' : '')
         + '<span class="imgbox__state" data-state-for="' + id + '"></span></div>'
         + '<input type="text" id="' + id + '" value="' + esc(val) + '" placeholder="사진을 올리거나 주소를 붙여넣으세요">'
         + '<div class="imgbox__spec"><b>규격</b> ' + esc(field.spec || '')
