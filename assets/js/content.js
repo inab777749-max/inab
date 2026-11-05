@@ -65,7 +65,9 @@
     document.querySelectorAll('[data-c-src]').forEach((node) => {
       const key = node.dataset.cSrc;
       if (has(key)) {
-        node.setAttribute('src', txt(data[key]).trim());
+        const source = safeMediaUrl(txt(data[key]));
+        if (!source || (node.tagName === 'IMG' && isVideo(source))) return;
+        node.setAttribute('src', source);
         node.setAttribute('referrerpolicy', 'no-referrer');
       }
     });
@@ -114,13 +116,48 @@
   }
 
   /* ------------------------------------------------------------ renderers */
-  /* One URL per line; the old single-image column is the fallback. */
+  /* Media may be one URL per line, a JSON list, or legacy image_url. */
+  function safeMediaUrl(value) {
+    const raw = typeof value === 'string' ? value.trim() : '';
+    if (!raw || /[\u0000-\u001f]/.test(raw)) return '';
+    if (/^data:(image\/(?:png|jpe?g|gif|webp|avif)|video\/(?:mp4|webm));base64,/i.test(raw)) return raw;
+    try {
+      const url = new URL(raw, document.baseURI || 'https://inabshop.pages.dev/');
+      return /^https?:$/.test(url.protocol) && !url.username && !url.password ? raw : '';
+    } catch { return ''; }
+  }
+
+  function isVideo(url) {
+    return /\.(mp4|webm|ogv|ogg|mov)(?:[?#]|$)/i.test(url) || /^data:video\//i.test(url);
+  }
+
   function gallery(row) {
-    const list = lines(row.images);
-    if (list.length) return list;
-    const single = txt(row.image_url).trim();
+    let values = row.images;
+    if (typeof values === 'string' && /^\s*\[/.test(values)) {
+      try { values = JSON.parse(values); } catch { /* Retain newline fallback. */ }
+    }
+    const list = (Array.isArray(values) ? values : lines(values))
+      .map((item) => safeMediaUrl(item && typeof item === 'object' ? item.url : item)).filter(Boolean);
+    if (list.length) return [...new Set(list)];
+    const single = safeMediaUrl(row.image_url);
     return single ? [single] : [];
   }
+
+  function lightboxAttrs(row, shots, source) {
+    return ' data-lightbox data-image="' + esc(source) + '" data-images="' + esc(shots.join('|'))
+      + '" data-media-list="' + esc(JSON.stringify(shots)) + '" data-title="' + esc(txt(row.title))
+      + '" data-description="' + esc(txt(row.description)) + '"';
+  }
+
+  function videoPreview(row, shots, source, className, extra) {
+    return '<div class="' + className + ' media-video-preview" style="' + esc(focusStyle(row)) + '">'
+      + '<video src="' + esc(source) + '" controls playsinline preload="metadata" aria-label="'
+      + esc(txt(row.title) || '영상') + '"></video>'
+      + '<button class="media-video-open" type="button"' + lightboxAttrs(row, shots, source)
+      + ' aria-label="' + esc(txt(row.title)) + ' 영상 크게 보기">크게 보기</button>' + (extra || '') + '</div>';
+  }
+
+  window.INABMedia = Object.freeze({ safeUrl: safeMediaUrl, isVideo, gallery });
 
   function focusStyle(row) {
     const x = row.focus_x == null || row.focus_x === '' ? 50 : Number(row.focus_x);
@@ -134,19 +171,19 @@
     const contain = row.fit === 'contain';
     const style = focusStyle(row);
     const media = 'portfolio-card__media' + (contain ? ' portfolio-card__media--contain' : '');
-    const blur = contain ? '<span class="portfolio-card__blur" aria-hidden="true" style="background-image:url('
+    const blur = contain && !isVideo(first) ? '<span class="portfolio-card__blur" aria-hidden="true" style="background-image:url('
       + esc(first) + ')"></span>' : '';
     const title = esc(txt(row.title));
     const count = shots.length > 1
       ? '<span class="media-count" aria-hidden="true">1 / ' + shots.length + '</span>' : '';
     return '<article class="portfolio-card" id="' + esc(txt(row.anchor)) + '" data-tags="' + esc(txt(row.tag)) + '">'
-      + '<button class="' + media + '" type="button" style="' + esc(style) + '" data-lightbox'
-      + ' data-image="' + esc(first) + '" data-images="' + esc(shots.join('|')) + '" data-title="' + title
-      + '" data-description="' + esc(txt(row.description)) + '" aria-label="' + title + ' 크게 보기">'
+      + (isVideo(first) ? videoPreview(row, shots, first, media, count)
+      : '<button class="' + media + '" type="button" style="' + esc(style) + '"' + lightboxAttrs(row, shots, first)
+      + ' aria-label="' + title + ' 크게 보기">'
       + blur
       + '<img src="' + esc(first) + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
       + count
-      + '</button>'
+      + '</button>')
       + '<div class="portfolio-card__body"><p class="work-card__meta">' + esc(txt(row.meta)) + '</p>'
       + '<' + tag + ' class="portfolio-card__title">' + title + '</' + tag + '>'
       + '<p class="portfolio-card__copy">' + multiline(txt(row.description)) + '</p>'
@@ -158,13 +195,12 @@
     const first = shots[0] || '';
     const title = esc(txt(row.title));
     return '<article class="work-card" data-tags="' + esc(txt(row.tag)) + '">'
-      + '<button class="work-card__button" type="button" data-lightbox data-image="' + esc(first)
-      + '" data-images="' + esc(shots.join('|')) + '" data-title="' + title
-      + '" data-description="' + esc(txt(row.description))
-      + '" aria-label="' + title + ' 크게 보기">'
+      + (isVideo(first) ? videoPreview(row, shots, first, 'work-card__image', '')
+      : '<button class="work-card__button" type="button"' + lightboxAttrs(row, shots, first)
+      + ' aria-label="' + title + ' 크게 보기">'
       + '<span class="work-card__image"><img src="' + esc(first)
       + '" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" style="' + esc(focusStyle(row)) + '"></span>'
-      + '</button>'
+      + '</button>')
       + '<div class="work-card__body"><p class="work-card__meta">' + esc(txt(row.meta)) + '</p>'
       + '<h3 class="work-card__title">' + title + '</h3>'
       + '<p class="work-card__copy">' + multiline(txt(row.description)) + '</p></div></article>';
@@ -200,12 +236,13 @@
     const title = esc(txt(row.title));
     const count = shots.length > 1
       ? '<span class="media-count" aria-hidden="true">1 / ' + shots.length + '</span>' : '';
+    const badge = (status ? '<span class="shop-card__status">' + esc(status) + '</span>' : '') + count;
     const media = image
-      ? '<button class="shop-card__media" type="button" style="' + esc(focusStyle(row)) + '" data-lightbox'
-        + ' data-image="' + esc(image) + '" data-images="' + esc(shots.join('|')) + '" data-title="' + title
-        + '" data-description="' + esc(txt(row.description)) + '" aria-label="' + title + ' 크게 보기">'
+      ? (isVideo(image) ? videoPreview(row, shots, image, 'shop-card__media', badge)
+        : '<button class="shop-card__media" type="button" style="' + esc(focusStyle(row)) + '"' + lightboxAttrs(row, shots, image)
+        + ' aria-label="' + title + ' 크게 보기">'
         + '<img src="' + esc(image) + '" alt="" loading="lazy" referrerpolicy="no-referrer">'
-        + (status ? '<span class="shop-card__status">' + esc(status) + '</span>' : '') + count + '</button>'
+        + badge + '</button>')
       : '<div class="shop-card__media">' + (status ? '<span class="shop-card__status">' + esc(status) + '</span>' : '') + '</div>';
     return '<article class="shop-card">' + media + '<div class="shop-card__body"><h2 class="shop-card__title">' + esc(txt(row.title)) + '</h2>'
       + (txt(row.price).trim() ? '<p class="shop-card__price">' + esc(txt(row.price)) + '</p>' : '')
@@ -221,9 +258,9 @@
     const title = esc(txt(row.title));
     const date = txt(row.date_label).trim();
     const url = txt(row.link_url).trim();
-    const media = shots.map((src, i) => '<button class="notice-shot" type="button" data-lightbox'
-      + ' data-image="' + esc(src) + '" data-images="' + esc(shots.join('|')) + '" data-title="' + title
-      + '" data-description="" aria-label="' + title + ' 사진 ' + (i + 1) + ' 크게 보기">'
+    const media = shots.map((src, i) => isVideo(src) ? videoPreview(row, shots, src, 'notice-shot', '')
+      : '<button class="notice-shot" type="button"' + lightboxAttrs(row, shots, src)
+      + ' aria-label="' + title + ' 사진 ' + (i + 1) + ' 크게 보기">'
       + '<img src="' + esc(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer"></button>').join('');
     return '<details class="notice-post' + (pinned ? ' is-pinned' : '') + '"' + (index === 0 ? ' open' : '') + '>'
       + '<summary><span class="notice-post__head">'
@@ -454,16 +491,7 @@
         featured.innerHTML = rows.map(workCard).join('');
         hideEmptySection('[data-list="featured"]');
       }
-      if (portfolio.length) {
-        document.querySelectorAll('[data-subnav]').forEach((list) => {
-          list.innerHTML = portfolio.map((row) => '<li><a href="portfolio.html#' + esc(txt(row.anchor))
-            + '">' + esc(txt(row.title)) + '</a></li>').join('');
-        });
-      } else {
-        document.querySelectorAll('[data-subnav]').forEach((list) => list.remove());
-        document.querySelectorAll('.site-nav__link--has-menu')
-          .forEach((link) => link.classList.remove('site-nav__link--has-menu'));
-      }
+
     }
 
     if (sets.collab_artists) {
@@ -634,13 +662,19 @@
   }
 
   /* ----------------------------------------------------------------- run */
+  function publish(portfolio, events, data) {
+    window.SITE_CONTENT = data;
+    window.SITE_COLLECTIONS = { portfolio_items: portfolio };
+    window.INAB_SCHEDULE_EVENTS = events;
+    document.dispatchEvent(new CustomEvent('content:ready', { detail: data }));
+  }
   async function load() {
-    if (typeof fetchContent !== 'function' || !db) { markReady(); return; }
+    if (typeof fetchContent !== 'function' || !db) { publish(null, null, {}); markReady(); return; }
     try {
       const [content, portfolio, collab, packages, options, steps, notices, forms, faq, posts, events, shop] =
         await Promise.all([
           fetchContent(),
-          fetchAll('portfolio_items', { order: 'sort_order' }),
+          fetchAll('portfolio_items_public', { order: 'sort_order' }),
           fetchAll('collab_artists', { order: 'sort_order' }),
           fetchAll('price_packages', { order: 'sort_order' }),
           fetchAll('price_options', { order: 'sort_order' }),
@@ -649,7 +683,7 @@
           fetchAll('inquiry_forms', { order: 'sort_order' }),
           fetchAll('faq_items', { order: 'sort_order' }),
           fetchAll('notice_posts', { order: 'sort_order' }),
-          fetchAll('schedule_events', { order: 'event_date' }),
+          fetchAll('schedule_events_public', { order: 'event_date' }),
           fetchAll('shop_items', { order: 'sort_order' })
         ]);
       const data = content || {};
@@ -668,11 +702,11 @@
       if (txt(data.inquiry_send_on).trim() === 'off') {
         document.querySelectorAll('[data-inquiry-send]').forEach((box) => box.remove());
       }
-      window.SITE_CONTENT = data;
-      document.dispatchEvent(new CustomEvent('content:ready', { detail: data }));
+      publish(portfolio, events, data);
       focusHash();
     } catch (err) {
       console.warn('content load', err);
+      publish(null, null, {});
     }
     markReady();
   }
