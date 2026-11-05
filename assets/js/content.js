@@ -89,6 +89,36 @@
         node.hidden = !has(key);
       }
     });
+    applySocialIcons(data);
+  }
+
+  function applySocialIcons(data) {
+    const fallbacks = { artmug: 'A', x: 'X', discord: 'D' };
+    document.querySelectorAll('[data-social-link]').forEach((link) => {
+      const id = link.dataset.socialLink;
+      const fallback = fallbacks[id];
+      const icon = link.querySelector('.social-link__icon');
+      if (!fallback || !icon) return;
+      const reset = () => {
+        icon.textContent = fallback;
+        icon.classList.remove('social-link__icon--image');
+      };
+      const source = safeMediaUrl(data['social_' + id + '_icon_url']);
+      reset();
+      if (!source || isVideo(source)) return;
+      const image = document.createElement('img');
+      image.alt = '';
+      image.loading = 'lazy';
+      image.decoding = 'async';
+      image.setAttribute('referrerpolicy', 'no-referrer');
+      image.addEventListener('error', () => {
+        if (icon.firstElementChild === image) reset();
+      }, { once: true });
+      icon.textContent = '';
+      icon.classList.add('social-link__icon--image');
+      icon.appendChild(image);
+      image.src = source;
+    });
   }
 
   function applyToday(data) {
