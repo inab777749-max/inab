@@ -49,29 +49,33 @@ async function fetchAll(table, options) {
 
 async function insertRow(table, row) {
   if (!db) return false;
-  const { error } = await db.from(table).insert(row);
+  LAST_DB_ERROR = null;
+  const { data, error } = await db.from(table).insert(row).select('id').single();
   if (error) { console.warn('insertRow ' + table, error); LAST_DB_ERROR = error; return false; }
   return true;
 }
 
 async function updateRow(table, id, updates) {
   if (!db) return false;
-  const { error } = await db.from(table).update(updates).eq('id', id);
+  LAST_DB_ERROR = null;
+  const { data, error } = await db.from(table).update(updates).eq('id', id).select('id').single();
   if (error) { console.warn('updateRow ' + table, error); LAST_DB_ERROR = error; return false; }
   return true;
 }
 
 async function deleteRow(table, id) {
   if (!db) return false;
-  const { error } = await db.from(table).delete().eq('id', id);
+  LAST_DB_ERROR = null;
+  const { data, error } = await db.from(table).delete().eq('id', id).select('id').single();
   if (error) { console.warn('deleteRow ' + table, error); LAST_DB_ERROR = error; return false; }
   return true;
 }
 
 async function saveContent(data) {
   if (!db) return false;
+  LAST_DB_ERROR = null;
   const { error } = await db.from('site_content')
-    .upsert({ id: CONTENT_ROW_ID, data: data, updated_at: new Date().toISOString() });
+    .upsert({ id: CONTENT_ROW_ID, data: data, updated_at: new Date().toISOString() }).select('id').single();
   if (error) { console.warn('saveContent', error); LAST_DB_ERROR = error; return false; }
   return true;
 }
@@ -121,11 +125,11 @@ async function compressImage(file, maxWidth, quality) {
 async function uploadImage(file, folder, maxWidth) {
   if (!db) return null;
   try {
-    const packed = await compressImage(file, maxWidth);
+    const packed = {blob: file, ext: (file.name.split('.').pop() || 'bin').toLowerCase().replace(/[^a-z0-9]/g, '')};
     const stamp = Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     const path = (folder || 'uploads') + '/' + stamp + '.' + packed.ext;
     const { error } = await db.storage.from(IMAGE_BUCKET)
-      .upload(path, packed.blob, { upsert: true, contentType: packed.blob.type || 'image/jpeg' });
+      .upload(path, packed.blob, { upsert: false, contentType: packed.blob.type || 'image/jpeg' });
     if (error) { console.warn('uploadImage', error); return null; }
     const { data } = db.storage.from(IMAGE_BUCKET).getPublicUrl(path);
     return (data && data.publicUrl) || null;

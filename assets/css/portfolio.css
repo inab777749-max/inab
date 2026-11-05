@@ -1,0 +1,75 @@
+.inab-portfolio-section { padding-block: 48px 72px; }
+.inab-portfolio__top { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.inab-portfolio__total { margin: 0; color: var(--deep); background: var(--pale); padding: 3px 13px; border-radius: 99px; font-size: .9rem; font-weight: 700; }
+.inab-portfolio__hint { margin: 0; font-size: .82rem; color: var(--muted); }
+.inab-portfolio__filters { display: flex; flex-wrap: wrap; gap: 9px; margin-bottom: 28px; }
+.inab-portfolio__filters button { display: inline-flex; align-items: center; gap: 8px; min-height: 42px; padding: 9px 16px; border: 1px solid var(--line); border-radius: 99px; background: var(--white); color: var(--body); font: inherit; font-size: .88rem; cursor: pointer; transition: background .2s ease, color .2s ease, border-color .2s ease; }
+.inab-portfolio__filters button[aria-pressed="true"] { color: var(--deep); border-color: var(--violet); background: var(--pale); }
+.inab-portfolio__filters small { font-size: .75rem; opacity: .7; }
+.inab-portfolio__state { padding: 70px 20px; border: 1px solid var(--line); border-radius: var(--radius); text-align: center; color: var(--body); }
+.inab-portfolio__state[hidden], [data-portfolio-shell][hidden] { display: none; }
+.inab-carousel { position: relative; outline-offset: 9px; }
+.inab-carousel__viewer { display: grid; grid-template-columns: 48px minmax(0, 1fr) 48px; align-items: center; gap: 18px; }
+.inab-carousel__arrow { display: grid; place-items: center; flex: 0 0 auto; width: 46px; height: 46px; padding: 0; border: 1px solid var(--line); border-radius: 50%; color: var(--deep); background: var(--white); cursor: pointer; transition: background .2s ease, transform .2s ease; }
+.inab-carousel__arrow:hover:not(:disabled) { background: var(--pale); transform: scale(1.06); }
+.inab-carousel__arrow:disabled { opacity: .28; cursor: default; }
+.inab-carousel__arrow svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.inab-carousel__stage { position: relative; height: clamp(360px, 62vh, 680px); min-width: 0; overflow: hidden; border-radius: 16px; background: transparent; touch-action: pan-y pinch-zoom; user-select: none; }
+.inab-carousel__slide { position: absolute; inset: 0; display: grid; place-items: center; width: 100%; height: 100%; border: 0; padding: 0; border-radius: 16px; background: transparent; color: var(--body); font: inherit; }
+button.inab-carousel__slide { cursor: zoom-in; }
+.inab-carousel__slide img, .inab-carousel__slide video { width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px; }
+.inab-carousel__slide img { pointer-events: none; }
+.inab-carousel__slide video { background: #17191e; }
+.inab-carousel__slide.is-error { border: 1px dashed var(--line); background: var(--pale-2); }
+.inab-carousel__video-wrap { position: relative; }
+.inab-carousel__expand { position: absolute; top: 12px; right: 12px; z-index: 1; padding: 7px 12px; border: 1px solid var(--line); border-radius: 99px; background: rgba(255,255,255,.94); color: var(--deep); font: inherit; font-size: .8rem; cursor: pointer; }
+.inab-carousel__caption { margin: 21px 66px 0; min-height: 88px; }
+.inab-carousel__caption h2 { margin: 2px 0 6px; font: 700 clamp(1.05rem, 2vw, 1.4rem)/1.5 var(--sans); }
+.inab-carousel__caption p { margin: 0 0 7px; white-space: pre-line; color: var(--body); font-size: .92rem; line-height: 1.75; }
+.inab-carousel__caption .inab-carousel__meta { color: var(--muted); font-size: .76rem; letter-spacing: .06em; }
+.inab-carousel__credits { color: var(--muted); font-size: .8rem; white-space: pre-line; }
+.inab-carousel__measure { position: absolute; height: auto!important; visibility: hidden; pointer-events: none; top: 0; inset-inline: 0; margin-top: 0; }
+.inab-carousel__shots { display: flex; gap: 8px; margin: 8px 66px 14px; min-height: 0; overflow-x: auto; scrollbar-width: thin; }
+.inab-carousel__shots.has-shots { min-height: 66px; padding-bottom: 5px; }
+.inab-carousel__shot { position: relative; flex: 0 0 74px; display: grid; place-items: center; height: 56px; padding: 3px; border: 1px solid var(--line); border-radius: 7px; background: var(--white); cursor: pointer; }
+.inab-carousel__shot[aria-pressed="true"] { border: 2px solid var(--violet); padding: 2px; }
+.inab-carousel__shot img, .inab-carousel__shot video { width: 100%; height: 100%; object-fit: contain; }
+.inab-carousel__shot span { position: absolute; bottom: 2px; right: 3px; color: var(--deep); background: var(--white); padding: 0 3px; font-size: .6rem; }
+.inab-carousel__position { display: flex; align-items: center; gap: 22px; margin: 12px 66px 0; }
+.inab-carousel__position input { flex: 1 1 auto; width: 0; min-width: 0; height: 26px; margin: 0; padding: 0; accent-color: var(--violet); cursor: pointer; }
+.inab-carousel__position output { min-width: 62px; text-align: right; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.inab-carousel :focus-visible, .inab-portfolio__filters :focus-visible, .inab-lightbox :focus-visible { outline: 2px solid var(--deep); outline-offset: 4px; }
+.inab-lightbox { position: fixed; inset: 0; width: min(1280px, calc(100vw - 32px)); max-width: none; height: auto; max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid var(--line); border-radius: 18px; background: var(--paper); color: var(--ink); overflow: auto; overscroll-behavior: contain; }
+.inab-lightbox::backdrop { background: rgba(25,22,34,.83); backdrop-filter: blur(4px); }
+.inab-lightbox__toolbar { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; background: var(--paper); }
+.inab-lightbox__toolbar p { margin: 0; font-size: .8rem; color: var(--muted); }
+.inab-lightbox__close { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--white); color: var(--ink); font: 28px/1 var(--sans); cursor: pointer; }
+.inab-lightbox__viewer { display: grid; grid-template-columns: 48px minmax(0,1fr) 48px; gap: 10px; align-items: center; padding-inline: 16px; }
+.inab-lightbox__stage { position: relative; height: min(67dvh, 850px); min-height: 200px; min-width: 0; touch-action: pan-y pinch-zoom; }
+.inab-lightbox__caption { padding: 20px 74px 30px; }
+.inab-lightbox__caption h2 { margin: 0 0 8px; font: 700 1.2rem/1.5 var(--sans); }
+.inab-lightbox__caption p { margin: 0 0 7px; color: var(--body); white-space: pre-line; }
+.inab-portfolio-modal-open { overflow: hidden; }
+@media (max-width: 700px) {
+  .inab-portfolio-section { padding-block: 28px 44px; }
+  .inab-portfolio__top { align-items: flex-start; gap: 10px; }
+  .inab-portfolio__hint { max-width: 150px; text-align: right; font-size: .72rem; }
+  .inab-portfolio__filters { gap: 7px; margin-bottom: 20px; }
+  .inab-portfolio__filters button { font-size: .75rem; padding: 7px 11px; min-height: 38px; }
+  .inab-carousel__viewer { grid-template-columns: 34px minmax(0,1fr) 34px; gap: 6px; }
+  .inab-carousel__arrow { width: 34px; height: 40px; }
+  .inab-carousel__arrow svg { width: 18px; }
+  .inab-carousel__stage { height: clamp(280px, 82vw, 450px); border-radius: 10px; }
+  .inab-carousel__caption { margin-inline: 40px; margin-top: 16px; min-height: 84px; }
+  .inab-carousel__caption p { font-size: .8rem; }
+  .inab-carousel__shots { margin-inline: 40px; }
+  .inab-carousel__position { margin-inline: 4px; gap: 12px; }
+  .inab-lightbox { width: calc(100vw - 12px); max-height: calc(100dvh - 12px); border-radius: 12px; }
+  .inab-lightbox__viewer { padding-inline: 6px; gap: 4px; grid-template-columns: 32px minmax(0,1fr) 32px; }
+  .inab-lightbox__viewer .inab-carousel__arrow { width: 30px; }
+  .inab-lightbox__stage { height: 61dvh; }
+  .inab-lightbox__caption { padding: 16px 18px 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .inab-carousel__arrow, .inab-portfolio__filters button { transition: none; }
+}

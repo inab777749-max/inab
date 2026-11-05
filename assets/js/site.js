@@ -100,7 +100,7 @@
     }
 
     const tab = target.closest("[role='tab']");
-    if (tab) { activateTab(tab); return; }
+    if (tab && !tab.hasAttribute('data-ic-tab')) { activateTab(tab); return; }
 
     const copyButton = target.closest("[data-copy-form]");
     if (copyButton) { copyForm(copyButton.closest("form")); return; }
@@ -118,12 +118,12 @@
       document.querySelectorAll("dialog[open]").forEach((dialog) => dialog.close());
       return;
     }
-    if (document.querySelector("dialog[data-lightbox-modal][open]")) {
+    if (document.querySelector("dialog[data-lightbox-modal][open]") && event.target.tagName !== 'VIDEO') {
       if (event.key === "ArrowLeft") { stepShot(-1); return; }
       if (event.key === "ArrowRight") { stepShot(1); return; }
     }
     const tab = event.target.closest && event.target.closest("[role='tab']");
-    if (!tab) return;
+    if (!tab || tab.hasAttribute('data-ic-tab')) return;
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
     const tabs = [...tab.closest("[role='tablist']").querySelectorAll("[role='tab']")];
     const index = tabs.indexOf(tab);
@@ -152,6 +152,7 @@
     document.querySelectorAll(selector).forEach((item) => {
       const tags = (item.dataset.tags || "").split(/[\s,]+/);
       item.hidden = filter !== "all" && !tags.includes(filter);
+      if (item.hidden) item.querySelectorAll('video').forEach((video) => video.pause());
     });
   }
 
@@ -159,22 +160,87 @@
   let shots = [];
   let shotIndex = 0;
 
+  function safeMediaUrl(value) {
+    if (window.INABMedia) return window.INABMedia.safeUrl(value);
+    const raw = typeof value === 'string' ? value.trim() : '';
+    if (!raw || /[\u0000-\u001f]/.test(raw)) return '';
+    if (/^data:(image\/(?:png|jpe?g|gif|webp|avif)|video\/(?:mp4|webm));base64,/i.test(raw)) return raw;
+    try {
+      const url = new URL(raw, document.baseURI || 'https://inabshop.pages.dev/');
+      return /^https?:$/.test(url.protocol) && !url.username && !url.password ? raw : '';
+    } catch { return ''; }
+  }
+
+  function isVideo(url) {
+    return window.INABMedia ? window.INABMedia.isVideo(url)
+      : /\.(mp4|webm|ogv|ogg|mov)(?:[?#]|$)/i.test(url) || /^data:video\//i.test(url);
+  }
+
+  function stopModalVideo(modal) {
+    const video = modal && modal.querySelector('[data-modal-video]');
+    if (!video) return;
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
+    video.hidden = true;
+  }
+
+  function bindModalMedia(modal) {
+    if (modal.dataset.mediaBound) return;
+    modal.dataset.mediaBound = 'true';
+    modal.addEventListener('close', () => stopModalVideo(modal));
+    modal.addEventListener('cancel', () => stopModalVideo(modal));
+  }
+
+  /* A media control never starts a second audio track elsewhere on the page. */
+  document.addEventListener('play', (event) => {
+    if (event.target.tagName !== 'VIDEO') return;
+    document.querySelectorAll('video').forEach((video) => {
+      if (video !== event.target && !video.paused) video.pause();
+    });
+  }, true);
+  document.addEventListener('toggle', (event) => {
+    if (event.target.tagName === 'DETAILS' && !event.target.open) {
+      event.target.querySelectorAll('video').forEach((video) => video.pause());
+    }
+  }, true);
+
   function paintShot() {
     const modal = document.querySelector("[data-lightbox-modal]");
     if (!modal) return;
     const image = modal.querySelector("[data-modal-image]");
     const counter = modal.querySelector("[data-modal-count]");
     const many = shots.length > 1;
+    const source = shots[shotIndex] || '';
+    const videoShot = isVideo(source);
+    stopModalVideo(modal);
     if (image) {
       image.removeAttribute("width");
       image.removeAttribute("height");
-      image.src = shots[shotIndex] || "";
+      if (source && !videoShot) image.src = source;
+      else image.removeAttribute('src');
       image.setAttribute("referrerpolicy", "no-referrer");
-      image.hidden = !shots.length;
+      image.hidden = !source || videoShot;
+    }
+    if (videoShot && image) {
+      let video = modal.querySelector('[data-modal-video]');
+      if (!video) {
+        video = document.createElement('video');
+        video.className = 'modal__image';
+        video.setAttribute('data-modal-video', '');
+        video.setAttribute('controls', '');
+        video.setAttribute('playsinline', '');
+        video.setAttribute('preload', 'metadata');
+        image.insertAdjacentElement('afterend', video);
+      }
+      video.setAttribute('aria-label', image.alt || '확대 영상');
+      video.src = source;
+      video.hidden = false;
     }
     if (counter) {
       counter.textContent = (shotIndex + 1) + " / " + shots.length;
       counter.hidden = !many;
+      counter.classList.toggle('is-video', videoShot);
     }
     modal.querySelectorAll("[data-modal-step]").forEach((node) => { node.hidden = !many; });
   }
@@ -188,9 +254,16 @@
   function openModal(button) {
     const modal = document.querySelector("[data-lightbox-modal]");
     if (!modal || typeof modal.showModal !== "function") return;
-    const list = (button.dataset.images || "").split("|").map((s) => s.trim()).filter(Boolean);
-    shots = list.length ? list : [button.dataset.image || ""].filter(Boolean);
-    shotIndex = 0;
+    bindModalMedia(modal);
+    let values;
+    try { values = JSON.parse(button.dataset.mediaList || 'null'); } catch { values = null; }
+    const list = (Array.isArray(values) ? values : (button.dataset.images || '').split('|'))
+      .map(safeMediaUrl).filter(Boolean);
+    const selected = safeMediaUrl(button.dataset.image);
+    shots = list.length ? list : [selected].filter(Boolean);
+    if (!shots.length) return;
+    shotIndex = Math.max(0, shots.indexOf(selected));
+    document.querySelectorAll('video').forEach((video) => { if (!video.paused) video.pause(); });
     const image = modal.querySelector("[data-modal-image]");
     const title = modal.querySelector("[data-modal-title]");
     const copy = modal.querySelector("[data-modal-copy]");
@@ -220,7 +293,10 @@
       candidate.setAttribute("aria-selected", String(selected));
       candidate.tabIndex = selected ? 0 : -1;
       const panel = document.getElementById(candidate.getAttribute("aria-controls") || "");
-      if (panel) panel.hidden = !selected;
+      if (panel) {
+        panel.hidden = !selected;
+        if (!selected) panel.querySelectorAll('video').forEach((video) => video.pause());
+      }
     });
   }
 
@@ -377,4 +453,18 @@
   document.querySelectorAll("[data-c-year]").forEach((node) => {
     node.textContent = node.textContent.replace(/\{year\}/g, String(new Date().getFullYear()));
   });
+})();
+
+(() => {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  document.addEventListener('pointerdown', event => {
+    if(reduced.matches || event.button !== 0 || event.target.closest('input,textarea,select,video')) return;
+    const spark=document.createElement('span'); spark.className='inab-click-spark';
+    spark.setAttribute('aria-hidden','true');spark.style.left=event.clientX+'px';spark.style.top=event.clientY+'px';
+    document.body.append(spark);setTimeout(()=>spark.remove(),550);
+  },{passive:true});
+  if(!reduced.matches && 'IntersectionObserver' in window){
+    const observer=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.add('inab-enter');observer.unobserve(entry.target);}}),{threshold:.08});
+    document.querySelectorAll('main > section').forEach(el=>observer.observe(el));
+  }
 })();

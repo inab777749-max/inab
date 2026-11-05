@@ -17,13 +17,16 @@ const PAGES = [
 const COLLECTIONS = {
   portfolio_items: {
     label: '포트폴리오 작업',
-    where: '포트폴리오 페이지 카드 + 메인 Selected Works + 상단 메뉴 하위 목록',
+    where: '포트폴리오 슬라이드 + 메인 Selected Works',
     order: 'sort_order',
     fields: [
-      { key: 'title', label: '작업명', type: 'text', help: '카드 제목. 상단 메뉴 하위 목록에도 같은 이름이 들어갑니다', width: 'half' },
+      { key: 'title', label: '작업명', type: 'text', help: '슬라이드 아래 작품 이름', width: 'half' },
       { key: 'meta', label: '영문 라벨', type: 'text', help: '제목 위 작은 글씨. 예: Illustration Based', width: 'half' },
       { key: 'description', label: '설명', type: 'textarea', help: '카드 본문과 확대 화면에 같이 쓰입니다. 2~3줄 권장' },
       { key: 'images', label: '작업 사진', type: 'gallery', help: '여러 장 넣을 수 있습니다. 첫 장이 카드에 나오고, 방문자는 확대 화면에서 넘겨봅니다. GIF·움직이는 WEBP 도 됩니다', spec: '권장 1200×900 (가로 4:3) · 세로로 긴 사진은 아래 “카드 표시 방식”을 전체 보기로', ratio: '4 / 3' },
+      { key: 'credit', label: '원화 등 크레딧', type: 'text', width: 'half', help: '입력한 그대로 공개됩니다' },
+      { key: 'work_date', label: '작업일', type: 'date', width: 'half' },
+      { key: 'client_name', label: '의뢰자 닉네임 · 관리용', type: 'text', help: '원문은 관리자만 볼 수 있습니다. 공개 화면에는 첫 글자만 표시됩니다' },
       { key: 'tag', label: '분류', type: 'text', help: '아래 분류 목록의 영문 값과 같게. 예: sculpt / facial / nilo / styling', width: 'half' },
       { key: 'anchor', label: '앵커 아이디', type: 'text', help: '메뉴에서 이 카드로 바로 가는 주소. 영문 소문자·하이픈. 예: original-facial', width: 'half' },
       { key: 'fit', label: '카드 표시 방식', type: 'select', options: [['cover', '꽉 채우기 (잘림)'], ['contain', '전체 보기 (여백은 흐린 배경)']], help: '세로로 긴 사진은 전체 보기를 쓰면 잘리지 않습니다', width: 'half' },
@@ -125,7 +128,12 @@ const COLLECTIONS = {
       { key: 'event_date', label: '날짜', type: 'date', width: 'half', help: '형식 YYYY-MM-DD' },
       { key: 'calendar', label: '달력', type: 'select', width: 'half', options: [['package', '패키지 작업'], ['nilo', '닐로툰 & 뚜따']], help: '어느 탭의 달력에 표시할지' },
       { key: 'kind', label: '종류', type: 'select', width: 'half', options: [['holiday', '휴일'], ['closed', '마감'], ['waiting', '대기'], ['working', '진행'], ['done', '완료']], help: '색이 달라집니다. 범례와 같은 순서' },
-      { key: 'label', label: '표시 문구', type: 'text', width: 'half', help: '칸에 들어갈 짧은 글. 예: 대기 1건 / 정기 휴일' }
+      { key: 'label', label: '기존 표시 문구', type: 'text', width: 'half' },
+      { key: 'end_date', label: '종료일', type: 'date', width: 'half' },
+      { key: 'public_title', label: '공개할 작업 내용', type: 'text' },
+      { key: 'client_name', label: '예약자 · 관리용', type: 'text' },
+      { key: 'private_memo', label: '비공개 메모', type: 'textarea' },
+      { key: 'quantity', label: '작업 수', type: 'number', width: 'half' }
     ]
   },
   notice_posts: {
@@ -182,10 +190,10 @@ const CONTENT_TABS = [
         ]
       },
       {
-        title: '상단 메뉴 이름', where: '전 페이지 헤더 · 포트폴리오 하위 목록은 작업 목록에서 자동 생성',
+        title: '상단 메뉴 이름', where: '전 페이지 헤더 · 문의하기는 오른쪽 끝에 표시됩니다',
         fields: PAGES.filter(p => p.slug !== 'home').map(p => (
           { key: 'nav_' + p.slug, label: p.label, type: 'text', width: 'half', help: '메뉴에 보일 이름' }
-        ))
+        )).concat([{ key: 'nav_inquiry', label: '문의하기', type: 'text', width: 'half', help: '상단 오른쪽 문의하기 버튼 문구' }])
       },
       {
         title: '푸터 링크', where: '전 페이지 하단 오른쪽',
@@ -240,11 +248,13 @@ const CONTENT_TABS = [
       {
         title: '하단 3칸', where: '메인 맨 아래 보라색 띠',
         fields: [
-          { key: 'home_flow_title', label: '1번 칸 제목', type: 'text', width: 'half', help: '영문 권장' },
-          { key: 'home_flow', label: '1번 칸 단계', type: 'textarea', help: '한 줄에 하나씩. 번호는 자동. 4줄 권장' },
-          { key: 'home_about_title', label: '2번 칸 제목', type: 'text', width: 'half', help: '영문 권장' },
-          { key: 'home_about_sign', label: '2번 칸 서명', type: 'text', width: 'half', help: '오른쪽 아래 흐린 손글씨. 비우면 안 나옵니다' },
-          { key: 'home_about_copy', label: '2번 칸 내용', type: 'textarea', help: '두세 줄 권장' },
+          { key: 'home_about_title', label: '왼쪽 칸 제목', type: 'text', width: 'half', help: '영문 권장' },
+          { key: 'home_about_sign', label: '왼쪽 칸 서명', type: 'text', width: 'half', help: '오른쪽 아래 흐린 손글씨. 비우면 안 나옵니다' },
+          { key: 'home_about_copy', label: '왼쪽 칸 내용', type: 'textarea', help: '두세 줄 권장' },
+          { key: 'home_social_title', label: '가운데 Social 제목', type: 'text', help: '비우면 Social' },
+          { key: 'social_artmug_url', label: '아트머그 주소', type: 'text', help: 'https:// 로 시작하는 실제 프로필 주소' },
+          { key: 'social_x_url', label: 'X / Twitter 주소', type: 'text' },
+          { key: 'social_discord_url', label: 'Discord 서버 초대 주소', type: 'text' },
           { key: 'home_contact_title', label: '3번 칸 제목', type: 'text', width: 'half', help: '영문 권장' },
           { key: 'home_contact_copy', label: '3번 칸 내용', type: 'textarea', help: '두세 줄 권장' },
           { key: 'home_contact_btn_label', label: '3번 칸 버튼 문구', type: 'text', width: 'half', help: '비우면 버튼이 빠집니다' },
