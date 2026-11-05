@@ -23,16 +23,16 @@ const COLLECTIONS = {
       { key: 'title', label: '작업명', type: 'text', help: '슬라이드 아래 작품 이름', width: 'half' },
       { key: 'meta', label: '영문 라벨', type: 'text', help: '제목 위 작은 글씨. 예: Illustration Based', width: 'half' },
       { key: 'description', label: '설명', type: 'textarea', help: '카드 본문과 확대 화면에 같이 쓰입니다. 2~3줄 권장' },
-      { key: 'images', label: '작업 사진', type: 'gallery', help: '여러 장 넣을 수 있습니다. 첫 장이 카드에 나오고, 방문자는 확대 화면에서 넘겨봅니다. GIF·움직이는 WEBP 도 됩니다', spec: '권장 1200×900 (가로 4:3) · 세로로 긴 사진은 아래 “카드 표시 방식”을 전체 보기로', ratio: '4 / 3' },
+      { key: 'images', label: '작업 사진', type: 'gallery', help: '첫 장이 대표 이미지입니다. 슬라이드는 항상 원본 전체를 표시하며 사진 비율이 달라도 높이는 유지됩니다. 여러 장은 썸네일과 확대 화면에서 넘겨봅니다. GIF·움직이는 WEBP 도 됩니다', spec: '가로·세로 비율 자유 · 원본 전체 표시 · 파일을 늘이거나 자르지 않습니다', ratio: '4 / 3' },
       { key: 'credit', label: '원화 등 크레딧', type: 'text', width: 'half', help: '입력한 그대로 공개됩니다' },
       { key: 'work_date', label: '작업일', type: 'date', width: 'half' },
       { key: 'client_name', label: '의뢰자 닉네임 · 관리용', type: 'text', help: '원문은 관리자만 볼 수 있습니다. 공개 화면에는 첫 글자만 표시됩니다' },
       { key: 'tag', label: '분류', type: 'text', help: '아래 분류 목록의 영문 값과 같게. 예: sculpt / facial / nilo / styling', width: 'half' },
       { key: 'anchor', label: '앵커 아이디', type: 'text', help: '메뉴에서 이 카드로 바로 가는 주소. 영문 소문자·하이픈. 예: original-facial', width: 'half' },
-      { key: 'fit', label: '카드 표시 방식', type: 'select', options: [['cover', '꽉 채우기 (잘림)'], ['contain', '전체 보기 (여백은 흐린 배경)']], help: '세로로 긴 사진은 전체 보기를 쓰면 잘리지 않습니다', width: 'half' },
+      { key: 'fit', label: '카드 표시 방식', type: 'select', hidden: true, options: [['cover', '꽉 채우기 (잘림)'], ['contain', '전체 보기 (여백은 흐린 배경)']], help: '기존 저장 값 보존용. 현재 슬라이드는 항상 원본 전체를 표시합니다', width: 'half' },
       { key: 'featured', label: '메인에 노출', type: 'checkbox', help: '메인 Selected Works 줄에 표시. 앞에서부터 5개까지', width: 'half' },
-      { key: 'focus_x', label: '초점 가로 %', type: 'number', help: '꽉 채우기일 때 보일 지점. 0=왼쪽 50=가운데 100=오른쪽', width: 'half' },
-      { key: 'focus_y', label: '초점 세로 %', type: 'number', help: '0=위 50=가운데 100=아래. 얼굴이 잘리면 값을 줄이세요', width: 'half' },
+      { key: 'focus_x', label: '초점 가로 %', type: 'number', hidden: true, help: '기존 저장 값 보존용. 현재 슬라이드는 원본 전체를 중앙에 표시합니다', width: 'half' },
+      { key: 'focus_y', label: '초점 세로 %', type: 'number', hidden: true, help: '기존 저장 값 보존용. 현재 슬라이드는 원본 전체를 중앙에 표시합니다', width: 'half' },
       { key: 'sort_order', label: '순서', type: 'number', hidden: true, help: '목록 순서대로 자동으로 매겨집니다' }
     ]
   },
@@ -309,10 +309,10 @@ const CONTENT_TABS = [
         ]
       },
       {
-        title: '분류 · 카드 모양', where: '포트폴리오 페이지 필터 버튼과 카드 크기',
+        title: '분류 · 슬라이드 안내', where: '전체·분류 필터를 설정합니다. 슬라이드는 같은 높이 안에 원본 전체를 표시합니다',
         fields: [
           { key: 'portfolio_all_label', label: '전체 버튼 문구', type: 'text', width: 'half', help: '기본 "전체"' },
-          { key: 'portfolio_ratio', label: '카드 사진 비율', type: 'select', width: 'half', options: [['4 / 3', '4:3 (기본)'], ['3 / 2', '3:2 가로형'], ['16 / 9', '16:9 넓은형'], ['1 / 1', '1:1 정사각'], ['3 / 4', '3:4 세로형']], help: '모든 카드가 이 비율로 통일됩니다. 사진 원본 비율이 달라도 상관없습니다' },
+          { key: 'portfolio_ratio', label: '카드 사진 비율', type: 'select', hidden: true, width: 'half', options: [['4 / 3', '4:3 (기본)'], ['3 / 2', '3:2 가로형'], ['16 / 9', '16:9 넓은형'], ['1 / 1', '1:1 정사각'], ['3 / 4', '3:4 세로형']], help: '기존 저장 값 보존용. 현재 슬라이드는 사진 원본 비율을 유지합니다' },
           { key: 'portfolio_cats', label: '분류 목록', type: 'textarea', help: '한 줄에 하나. 형식 = 영문값 | 버튼 이름 · 영문값은 작업의 "분류" 칸과 같아야 합니다. 예) facial | 페이셜' }
         ]
       }
